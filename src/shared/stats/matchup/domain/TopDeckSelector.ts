@@ -1,3 +1,4 @@
+import { supportsDeckMatchups } from "@shared/deck/domain/classifier/DeckClassifier";
 export interface DeckUsageCount {
 	deckTypeCode: string;
 	deckCount: number;
@@ -11,7 +12,7 @@ export class TopDeckSelector {
 		formatId: string,
 		deckCounts: ReadonlyMap<string, number> | readonly DeckUsageCount[],
 	): string[] {
-		if (formatId !== "1109") {
+		if (!supportsDeckMatchups(formatId)) {
 			return [];
 		}
 

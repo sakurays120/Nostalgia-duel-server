@@ -420,8 +420,8 @@ export class ReplayDeckBackfillService {
 				report.candidates++;
 
 				// 7. Classify decks
-				const m1Classification = classifyDeck(options.formatId, m1Deck.mainCards, aliasMap);
-				const m2Classification = classifyDeck(options.formatId, m2Deck.mainCards, aliasMap);
+				const m1Classification = classifyDeck(options.formatId, m1Deck.mainCards, aliasMap, m1Deck);
+				const m2Classification = classifyDeck(options.formatId, m2Deck.mainCards, aliasMap, m2Deck);
 
 				// 8. Write if not dry-run
 				if (!options.dryRun) {

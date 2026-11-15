@@ -1,3 +1,4 @@
+import { supportsDeckMatchups } from "@shared/deck/domain/classifier/DeckClassifier";
 export interface RawPhysicalMatchPerspective {
 	readonly gameId: string;
 	readonly matchId: string;
@@ -49,7 +50,7 @@ export class DeckMatchupCalculator {
 			nonComplementary: 0,
 		};
 
-		if (formatId !== "1109") {
+		if (!supportsDeckMatchups(formatId)) {
 			return {
 				totalPhysicalMatches: 0,
 				admittedPhysicalMatches: 0,
@@ -90,8 +91,8 @@ export class DeckMatchupCalculator {
 
 			const [m1, m2] = rows;
 
-			// 3. Format must be 1109
-			if (m1.formatId !== "1109" || m2.formatId !== "1109") {
+			// 3. Both perspectives must be from the requested format
+			if (m1.formatId !== formatId || m2.formatId !== formatId) {
 				continue;
 			}
 

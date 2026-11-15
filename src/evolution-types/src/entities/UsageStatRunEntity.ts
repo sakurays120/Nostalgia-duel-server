@@ -4,7 +4,7 @@ import { Check, Column, Entity, PrimaryColumn } from "typeorm";
 	name: "usage_stat_runs",
 	comment: "按赛制和自然半年保存一次完整发布的使用率统计及样本覆盖",
 })
-@Check("ck_usage_stat_runs_format_id", "format_id IN ('1103', '1109')")
+@Check("ck_usage_stat_runs_format_id", "format_id IN ('1103', '1109', 'goat')")
 @Check("ck_usage_stat_runs_total_decks", "total_decks >= 0")
 @Check(
 	"ck_usage_stat_runs_side_known_decks",

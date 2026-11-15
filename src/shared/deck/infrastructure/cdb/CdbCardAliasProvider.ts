@@ -5,22 +5,31 @@ import initSqlJs from "sql.js";
 import { CardAliasProvider } from "@shared/stats/persistence/RankedMatchPersistenceService";
 
 export class CdbCardAliasProvider implements CardAliasProvider {
-	private aliasPromise: Promise<ReadonlyMap<number, number>> | null = null;
+	private readonly aliasPromises = new Map<string, Promise<ReadonlyMap<number, number>>>();
 
 	constructor(private readonly cdbPath?: string) {}
 
-	private resolveCdbPath(): string {
+	private resolveCdbPath(formatId: string): string {
 		if (this.cdbPath) {
 			return this.cdbPath;
 		}
 		const resourcesDir = process.env.RESOURCES_DIR || "./nostalgia-resources";
-		const primaryPath = path.resolve(process.cwd(), resourcesDir, "ygopro", "base", "cards.cdb");
+		const cardDirectory = formatId === "goat" ? ["formats", "goat"] : ["base"];
+		const primaryPath = path.resolve(
+			process.cwd(),
+			resourcesDir,
+			"ygopro",
+			...cardDirectory,
+			"cards.cdb",
+		);
 		if (fsSync.existsSync(primaryPath)) {
 			return primaryPath;
 		}
 		const fallbackPath = path.resolve(
 			__dirname,
-			"../../../../../../nostalgia-resources/ygopro/base/cards.cdb",
+			"../../../../../../nostalgia-resources/ygopro",
+			...cardDirectory,
+			"cards.cdb",
 		);
 		if (fsSync.existsSync(fallbackPath)) {
 			return fallbackPath;
@@ -28,10 +37,11 @@ export class CdbCardAliasProvider implements CardAliasProvider {
 		return primaryPath;
 	}
 
-	async getAliases(_formatId: string): Promise<ReadonlyMap<number, number>> {
-		if (!this.aliasPromise) {
-			this.aliasPromise = (async () => {
-				const filePath = this.resolveCdbPath();
+	async getAliases(formatId: string): Promise<ReadonlyMap<number, number>> {
+		const filePath = this.resolveCdbPath(formatId);
+		let pending = this.aliasPromises.get(filePath);
+		if (!pending) {
+			pending = (async () => {
 				if (!fsSync.existsSync(filePath)) {
 					return new Map<number, number>();
 				}
@@ -53,7 +63,8 @@ export class CdbCardAliasProvider implements CardAliasProvider {
 				}
 				return aliases;
 			})();
+			this.aliasPromises.set(filePath, pending);
 		}
-		return this.aliasPromise;
+		return pending;
 	}
 }

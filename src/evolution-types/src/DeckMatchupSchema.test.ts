@@ -41,7 +41,7 @@ describe("DeckMatchup Schema Entities and Migration", () => {
 			(c) => c.target === StatsDeckMatchupEntity,
 		);
 		const checkExpressions = checks.map((c) => c.expression);
-		expect(checkExpressions).toContain("format_id = '1109'");
+		expect(checkExpressions).toContain("format_id IN ('1109', 'goat')");
 		expect(checkExpressions).toContain(
 			"first_deck_code <> 'OTHERS' AND second_deck_code <> 'OTHERS'",
 		);

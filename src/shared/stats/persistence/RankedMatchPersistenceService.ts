@@ -96,10 +96,8 @@ export class RankedMatchPersistenceService {
 				}
 
 				// 2. Write matches, match_decks, duels, player_stats
-				// GOAT has no deck type rows for the match_decks foreign key.
 				const bothPlayersResolved = resolvedPlayers.length === 2;
 				const saveDeckSnapshots =
-					formatId !== "goat" &&
 					bothPlayersResolved &&
 					resolvedPlayers.every(
 						({ player }) =>
@@ -150,7 +148,12 @@ export class RankedMatchPersistenceService {
 					const savedMatch = await manager.save(matchEntity);
 
 					if (saveDeckSnapshots && player.deck) {
-						const classification = classifyDeck(formatId, player.deck.mainCards, aliasMap);
+						const classification = classifyDeck(
+							formatId,
+							player.deck.mainCards,
+							aliasMap,
+							player.deck,
+						);
 						const matchDeckEntity = manager.create(MatchDeckEntity, {
 							matchId: savedMatch.id,
 							formatId,

@@ -1,3 +1,4 @@
+import { supportsDeckMatchups } from "@shared/deck/domain/classifier/DeckClassifier";
 import { Request, Response } from "express";
 
 export function renderDeckStatsPage(formatId: string): string {
@@ -396,7 +397,7 @@ export function renderDeckStatsPage(formatId: string): string {
 	</main>
 
 	<footer>
-		&copy; Nostalgia Duel Server · 1109 排位对战半年度卡组胜率矩阵
+		&copy; Nostalgia Duel Server · ${formatId} 排位对战半年度卡组胜率矩阵
 	</footer>
 
 	<script>
@@ -664,7 +665,7 @@ export class DeckStatsPageController {
 		const formatParam = req.params.format;
 		const format = Array.isArray(formatParam) ? formatParam[0] : (formatParam ?? "");
 
-		if (format !== "1109") {
+		if (!supportsDeckMatchups(format)) {
 			res.status(404).send("Not Found");
 			return;
 		}

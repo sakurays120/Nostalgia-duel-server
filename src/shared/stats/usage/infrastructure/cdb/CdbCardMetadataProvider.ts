@@ -9,20 +9,32 @@ export class CdbCardMetadataProvider implements CardMetadataProvider {
 	private readonly cards = new Map<number, CardMetadata>();
 	private readonly aliasMap = new Map<number, number>();
 
-	constructor(private readonly cdbPath?: string) {}
+	constructor(
+		private readonly cdbPath?: string,
+		private readonly formatId?: string,
+	) {}
 
 	private resolveCdbPath(): string {
 		if (this.cdbPath) {
 			return this.cdbPath;
 		}
 		const resourcesDir = process.env.RESOURCES_DIR || "./nostalgia-resources";
-		const primaryPath = path.resolve(process.cwd(), resourcesDir, "ygopro", "base", "cards.cdb");
+		const cardDirectory = this.formatId === "goat" ? ["formats", "goat"] : ["base"];
+		const primaryPath = path.resolve(
+			process.cwd(),
+			resourcesDir,
+			"ygopro",
+			...cardDirectory,
+			"cards.cdb",
+		);
 		if (fsSync.existsSync(primaryPath)) {
 			return primaryPath;
 		}
 		const fallbackPath = path.resolve(
 			__dirname,
-			"../../../../../../nostalgia-resources/ygopro/base/cards.cdb",
+			"../../../../../../nostalgia-resources/ygopro",
+			...cardDirectory,
+			"cards.cdb",
 		);
 		if (fsSync.existsSync(fallbackPath)) {
 			return fallbackPath;

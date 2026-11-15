@@ -1,3 +1,4 @@
+import { supportsDeckMatchups } from "@shared/deck/domain/classifier/DeckClassifier";
 import { Request, Response } from "express";
 import { config } from "src/config";
 import { dataSource } from "../../evolution-types/src/data-source";
@@ -25,8 +26,8 @@ export class GetDeckStatsController {
 
 		const formatParam = req.params.format;
 		const format = Array.isArray(formatParam) ? formatParam[0] : (formatParam ?? "");
-		if (format !== "1109") {
-			res.status(404).json({ error: `Unsupported format: ${format}. Only 1109 is supported.` });
+		if (!supportsDeckMatchups(format)) {
+			res.status(404).json({ error: `Unsupported format: ${format}` });
 			return;
 		}
 

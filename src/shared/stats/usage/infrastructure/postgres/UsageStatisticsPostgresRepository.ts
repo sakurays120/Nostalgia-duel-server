@@ -15,7 +15,10 @@ import {
 	RawPhysicalMatchPerspective,
 } from "@shared/stats/matchup/domain/DeckMatchupCalculator";
 import { MatchupQueryRepository } from "@shared/stats/matchup/application/GetDeckMatchupStatsUseCase";
-import { DECK_TYPE_CATALOG } from "@shared/deck/domain/classifier/DeckClassifier";
+import {
+	DECK_TYPE_CATALOG,
+	supportsDeckMatchups,
+} from "@shared/deck/domain/classifier/DeckClassifier";
 
 export class UsageStatisticsPostgresRepository
 	implements UsageStatisticsRepository, UsageQueryRepository, MatchupQueryRepository
@@ -300,7 +303,7 @@ export class UsageStatisticsPostgresRepository
 
 		try {
 			// 1. Delete details for this format and window
-			if (run.formatId === "1109") {
+			if (supportsDeckMatchups(run.formatId)) {
 				await queryRunner.query(
 					`DELETE FROM "stats_deck_top_players" WHERE format_id = $1 AND window_start = $2::date`,
 					[run.formatId, run.windowStart],
@@ -399,8 +402,8 @@ export class UsageStatisticsPostgresRepository
 				);
 			}
 
-			// 5. Batch insert matchup rows (1109 only)
-			if (run.formatId === "1109" && matchupRows.length > 0) {
+			// 5. Batch insert matchup rows
+			if (supportsDeckMatchups(run.formatId) && matchupRows.length > 0) {
 				const matchupBatchSize = 100;
 				for (let i = 0; i < matchupRows.length; i += matchupBatchSize) {
 					const chunk = matchupRows.slice(i, i + matchupBatchSize);
@@ -430,7 +433,7 @@ export class UsageStatisticsPostgresRepository
 			}
 
 			// 6. Verify checksum: COALESCE(SUM(match_count), 0) must equal expected sum
-			if (run.formatId === "1109") {
+			if (supportsDeckMatchups(run.formatId)) {
 				const sumRes = await queryRunner.query(
 					`SELECT COALESCE(SUM(match_count), 0)::bigint AS sum_matches 
 					 FROM "stats_deck_matchups" 
@@ -445,8 +448,8 @@ export class UsageStatisticsPostgresRepository
 					);
 				}
 
-				// 7. 预聚合卡组详情表（仅 1109）：全具名对手 8 计数与专精玩家 Top10
-				const namedCodes = (DECK_TYPE_CATALOG["1109"] ?? [])
+				// 7. 预聚合卡组详情表：全具名对手 8 计数与专精玩家 Top10
+				const namedCodes = (DECK_TYPE_CATALOG[run.formatId] ?? [])
 					.filter((t) => t.code !== "OTHERS")
 					.map((t) => t.code);
 

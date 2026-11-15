@@ -1,3 +1,4 @@
+import { GOAT_DECK_TEMPLATES } from "./GoatDeckTemplates";
 import {
 	classifyDeck,
 	CLASSIFIER_VERSIONS,
@@ -232,5 +233,36 @@ describe("DeckClassifier (1109 & 1103)", () => {
 		const catalog1103 = DECK_TYPE_CATALOG["1103"];
 		expect(catalog1103).toHaveLength(1);
 		expect(catalog1103[0]).toEqual({ code: "OTHERS", nameZh: "其他", sortOrder: 0 });
+	});
+});
+
+describe("GOAT YDK templates", () => {
+	it.each(GOAT_DECK_TEMPLATES)("classifies template $nameZh", (template) => {
+		expect(classifyDeck("goat", template.mainCards, undefined, template).deckTypeCode).toBe(
+			template.code,
+		);
+	});
+
+	it("requires the extra-deck card in the Horus template", () => {
+		const template = GOAT_DECK_TEMPLATES.find(({ code }) => code === "G05")!;
+		expect(classifyDeck("goat", template.mainCards).deckTypeCode).toBe("OTHERS");
+	});
+
+	it("chooses the smallest matching template even when a longer one appears first", () => {
+		const cards = [22609617, 22609617, 22609617, 32807846, 32807846, 18318842, 18318842];
+		expect(classifyDeck("goat", cards).deckTypeNameZh).toBe("水属性");
+	});
+
+	it("requires every copy in the correct deck section", () => {
+		expect(classifyDeck("goat", [18318842]).deckTypeCode).toBe("OTHERS");
+		expect(
+			classifyDeck("goat", [], undefined, { sideCards: [18318842, 18318842] }).deckTypeCode,
+		).toBe("OTHERS");
+	});
+
+	it("breaks equal-size ties by catalog order", () => {
+		expect(classifyDeck("goat", [97642679, 96420087, 18318842, 18318842]).deckTypeNameZh).toBe(
+			"水属性",
+		);
 	});
 });

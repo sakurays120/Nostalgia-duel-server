@@ -1,3 +1,4 @@
+import { supportsDeckUsage } from "@shared/deck/domain/classifier/DeckClassifier";
 import { Request, Response } from "express";
 import { config } from "src/config";
 import { dataSource } from "../../evolution-types/src/data-source";
@@ -23,7 +24,7 @@ export class GetUsagePeriodsController {
 
 		const formatParam = req.params.format;
 		const format = Array.isArray(formatParam) ? formatParam[0] : (formatParam ?? "");
-		if (format !== "1103" && format !== "1109") {
+		if (!supportsDeckUsage(format)) {
 			res.status(404).json({ error: `Unsupported format: ${format}` });
 			return;
 		}

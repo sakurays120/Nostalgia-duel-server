@@ -58,7 +58,11 @@ export async function runUsageCli(
 		}
 		const repo = new UsageStatisticsPostgresRepository(dataSource);
 		const cdb = new CdbCardMetadataProvider();
-		useCase = new RebuildUsageStatisticsUseCase(repo, cdb);
+		useCase = new RebuildUsageStatisticsUseCase(
+			repo,
+			cdb,
+			new CdbCardMetadataProvider(undefined, "goat"),
+		);
 	}
 
 	try {

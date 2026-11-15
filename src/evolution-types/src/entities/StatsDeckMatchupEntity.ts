@@ -12,7 +12,7 @@ import { UsageStatRunEntity } from "./UsageStatRunEntity";
 	"secondDeckCode",
 	"firstDeckCode",
 ])
-@Check("ck_stats_deck_matchups_format", "format_id = '1109'")
+@Check("ck_stats_deck_matchups_format", "format_id IN ('1109', 'goat')")
 @Check(
 	"ck_stats_deck_matchups_named_only",
 	"first_deck_code <> 'OTHERS' AND second_deck_code <> 'OTHERS'",

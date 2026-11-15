@@ -1,4 +1,7 @@
-import { DECK_TYPE_CATALOG } from "@shared/deck/domain/classifier/DeckClassifier";
+import {
+	DECK_TYPE_CATALOG,
+	supportsDeckUsage,
+} from "@shared/deck/domain/classifier/DeckClassifier";
 import { HalfYearWindow } from "../domain/HalfYearWindow";
 import { CdbCardMetadataProvider } from "../infrastructure/cdb/CdbCardMetadataProvider";
 import { UsageStatRunData } from "../domain/UsageConsistencyValidator";
@@ -119,10 +122,11 @@ export class GetUsageStatisticsUseCase {
 	constructor(
 		private readonly repository: UsageQueryRepository,
 		private readonly metadataProvider: CdbCardMetadataProvider,
+		private readonly goatMetadataProvider = metadataProvider,
 	) {}
 
 	public async getPeriods(formatId: string): Promise<UsagePeriodsResponse> {
-		if (formatId !== "1103" && formatId !== "1109") {
+		if (!supportsDeckUsage(formatId)) {
 			throw new Error(`Unsupported format: ${formatId}`);
 		}
 
@@ -144,7 +148,7 @@ export class GetUsageStatisticsUseCase {
 
 	public async getUsage(query: GetUsageQuery): Promise<UsageResponse> {
 		const formatId = query.format;
-		if (formatId !== "1103" && formatId !== "1109") {
+		if (!supportsDeckUsage(formatId)) {
 			throw new Error(`Unsupported format: ${formatId}`);
 		}
 
@@ -183,7 +187,8 @@ export class GetUsageStatisticsUseCase {
 			);
 		}
 
-		await this.metadataProvider.load();
+		const metadata = formatId === "goat" ? this.goatMetadataProvider : this.metadataProvider;
+		await metadata.load();
 
 		const denominator = metric === "side" ? run.sideKnownDecks : run.totalDecks;
 
@@ -224,7 +229,7 @@ export class GetUsageStatisticsUseCase {
 			const rows = snapshot.cardRows ?? [];
 
 			const cards: CardUsageItem[] = rows.map((r, index) => {
-				const meta = this.metadataProvider.getCardMetadata(r.cardId);
+				const meta = metadata.getCardMetadata(r.cardId);
 				const name = meta?.name || String(r.cardId);
 				const usageRate = denominator > 0 ? Number((r.deckCount / denominator).toFixed(6)) : null;
 				return {

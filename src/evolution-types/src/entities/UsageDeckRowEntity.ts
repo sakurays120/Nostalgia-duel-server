@@ -5,7 +5,7 @@ import { Check, Column, Entity, Index, PrimaryColumn } from "typeorm";
 	comment: "每个环境、自然半年和卡组类型的使用份数",
 })
 @Index("idx_usage_deck_rows_rank", ["formatId", "windowStart", "deckCount", "deckTypeCode"])
-@Check("ck_usage_deck_rows_format_id", "format_id IN ('1103', '1109')")
+@Check("ck_usage_deck_rows_format_id", "format_id IN ('1103', '1109', 'goat')")
 @Check("ck_usage_deck_rows_deck_count", "deck_count > 0")
 @Check(
 	"ck_usage_deck_rows_window_start",

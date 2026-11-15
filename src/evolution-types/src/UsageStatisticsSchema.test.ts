@@ -38,7 +38,7 @@ describe("UsageStatistics Schema Entities", () => {
 			(c) => c.target === UsageStatRunEntity,
 		);
 		const checkExpressions = checks.map((c) => c.expression);
-		expect(checkExpressions).toContain("format_id IN ('1103', '1109')");
+		expect(checkExpressions).toContain("format_id IN ('1103', '1109', 'goat')");
 		expect(checkExpressions).toContain("total_decks >= 0");
 		expect(checkExpressions).toContain(
 			"side_known_decks >= 0 AND side_known_decks <= total_decks",
@@ -84,7 +84,7 @@ describe("UsageStatistics Schema Entities", () => {
 			(c) => c.target === UsageDeckRowEntity,
 		);
 		const checkExpressions = checks.map((c) => c.expression);
-		expect(checkExpressions).toContain("format_id IN ('1103', '1109')");
+		expect(checkExpressions).toContain("format_id IN ('1103', '1109', 'goat')");
 		expect(checkExpressions).toContain("deck_count > 0");
 		expect(checkExpressions).toContain(
 			"EXTRACT(DAY FROM window_start) = 1 AND EXTRACT(MONTH FROM window_start) IN (1, 7)",
@@ -130,7 +130,7 @@ describe("UsageStatistics Schema Entities", () => {
 			(c) => c.target === UsageCardRowEntity,
 		);
 		const checkExpressions = checks.map((c) => c.expression);
-		expect(checkExpressions).toContain("format_id IN ('1103', '1109')");
+		expect(checkExpressions).toContain("format_id IN ('1103', '1109', 'goat')");
 		expect(checkExpressions).toContain(
 			"metric IN ('monster', 'spell', 'trap', 'extra', 'side')",
 		);

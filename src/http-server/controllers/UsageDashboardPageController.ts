@@ -1,3 +1,7 @@
+import {
+	supportsDeckUsage,
+	supportsDeckMatchups,
+} from "@shared/deck/domain/classifier/DeckClassifier";
 import { Request, Response } from "express";
 import { config } from "src/config";
 
@@ -341,7 +345,7 @@ export function renderUsageDashboardPage(formatId: string): string {
 			<a href="/leaderboards/${formatId}?tab=replays" class="tab-btn">录像下载</a>
 			<a href="/leaderboards/${formatId}?tab=ladder" class="tab-btn">天梯排行</a>
 			<a href="/leaderboards/${formatId}/usage" class="tab-btn active">使用率</a>
-			${formatId === "1109" ? `<a href="/leaderboards/${formatId}/deck-stats" class="tab-btn">卡组胜率</a>` : ""}
+			${supportsDeckMatchups(formatId) ? `<a href="/leaderboards/${formatId}/deck-stats" class="tab-btn">卡组胜率</a>` : ""}
 		</nav>
 	</header>
 
@@ -698,7 +702,7 @@ export class UsageDashboardPageController {
 		const formatParam = req.params.format;
 		const format = Array.isArray(formatParam) ? formatParam[0] : (formatParam ?? "");
 
-		if (format !== "1103" && format !== "1109") {
+		if (!supportsDeckUsage(format)) {
 			res.status(404).send("Not Found");
 			return;
 		}

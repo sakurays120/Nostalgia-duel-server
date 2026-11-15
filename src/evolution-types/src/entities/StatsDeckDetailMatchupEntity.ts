@@ -10,7 +10,7 @@ const bigintTransformer = {
 	name: "stats_deck_detail_matchups",
 	comment: "按赛制和自然半年保存各具名卡组对阵全对手的 8 项严格守恒计数",
 })
-@Check("ck_stats_deck_detail_matchups_format", "format_id = '1109'")
+@Check("ck_stats_deck_detail_matchups_format", "format_id IN ('1109', 'goat')")
 @Check(
 	"ck_stats_deck_detail_matchups_matches_sum",
 	"matches = first_matches + second_matches + unknown_seat_matches",

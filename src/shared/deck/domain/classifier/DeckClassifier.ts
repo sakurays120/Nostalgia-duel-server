@@ -1,3 +1,5 @@
+import { GOAT_DECK_TEMPLATES } from "./GoatDeckTemplates";
+
 export interface DeckClassificationResult {
 	formatId: string;
 	deckTypeCode: string;
@@ -13,11 +15,16 @@ export interface DeckTypeMetadata {
 }
 
 export const CLASSIFIER_VERSIONS: Record<string, string> = {
+	goat: "goat-ydk-v1",
 	"1109": "1109-c9ba01c-v2",
 	"1103": "1103-fallback-v1",
 };
 
 export const DECK_TYPE_CATALOG: Record<string, readonly DeckTypeMetadata[]> = {
+	goat: Object.freeze([
+		...GOAT_DECK_TEMPLATES.map(({ code, nameZh }, sortOrder) => ({ code, nameZh, sortOrder })),
+		{ code: "OTHERS", nameZh: "其他", sortOrder: GOAT_DECK_TEMPLATES.length },
+	]),
 	"1103": Object.freeze([{ code: "OTHERS", nameZh: "其他", sortOrder: 0 }]),
 	"1109": Object.freeze([
 		{ code: "D01", nameZh: "代行天使", sortOrder: 0 },
@@ -371,22 +378,58 @@ const RULES_1109: readonly RuleDefinition[] = [
 	},
 ];
 
+export function supportsDeckMatchups(formatId: string): boolean {
+	return formatId === "1109" || formatId === "goat";
+}
+
+export function supportsDeckUsage(formatId: string): boolean {
+	return formatId === "1103" || supportsDeckMatchups(formatId);
+}
+
+type CardAliases = NonNullable<Parameters<typeof normalizeCardCounts>[1]>;
+
+// Stable sorting preserves catalog order for templates with the same size.
+const GOAT_TEMPLATE_SECTIONS = GOAT_DECK_TEMPLATES.map((template) => {
+	const sections = [template.mainCards, template.extraCards ?? [], template.sideCards ?? []];
+	return { template, sections, size: sections.reduce((sum, cards) => sum + cards.length, 0) };
+}).sort((a, b) => a.size - b.size);
+
 export function classifyDeck(
 	formatId: string,
 	mainCards: readonly number[],
-	aliases?: ReadonlyMap<number, number> | Record<number, number>,
+	aliases?: CardAliases,
+	sections?: { extraCards?: readonly number[]; sideCards?: readonly number[] | null },
 ): DeckClassificationResult {
 	const version = CLASSIFIER_VERSIONS[formatId] ?? `${formatId}-fallback-v1`;
+	const fallback = {
+		formatId,
+		deckTypeCode: "OTHERS",
+		deckTypeNameZh: "其他",
+		classifierVersion: version,
+		evidence: [],
+	};
 
-	if (formatId !== "1109") {
+	if (formatId === "goat") {
+		const counts = [mainCards, sections?.extraCards ?? [], sections?.sideCards ?? []].map((cards) =>
+			normalizeCardCounts(cards, aliases),
+		);
+		const match = GOAT_TEMPLATE_SECTIONS.find(({ sections: required }) =>
+			required.every((cards, index) =>
+				[...normalizeCardCounts(cards, aliases)].every(
+					([id, copies]) => (counts[index].get(id) ?? 0) >= copies,
+				),
+			),
+		);
+		if (!match) return fallback;
 		return {
 			formatId,
-			deckTypeCode: "OTHERS",
-			deckTypeNameZh: "其他",
+			deckTypeCode: match.template.code,
+			deckTypeNameZh: match.template.nameZh,
 			classifierVersion: version,
-			evidence: [],
+			evidence: [...normalizeCardCounts(match.sections.flat(), aliases).keys()],
 		};
 	}
+	if (formatId !== "1109") return fallback;
 
 	const counts = normalizeCardCounts(mainCards, aliases);
 	const count = (id: number): number => counts.get(id) ?? 0;
@@ -420,11 +463,5 @@ export function classifyDeck(
 		}
 	}
 
-	return {
-		formatId,
-		deckTypeCode: "OTHERS",
-		deckTypeNameZh: "其他",
-		classifierVersion: version,
-		evidence: [],
-	};
+	return fallback;
 }

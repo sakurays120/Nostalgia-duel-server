@@ -7,7 +7,7 @@ export type UsageCardMetric = "monster" | "spell" | "trap" | "extra" | "side";
 	comment: "每个环境、自然半年、卡片指标和归一卡片的采用份数及投入张数分布",
 })
 @Index("idx_usage_card_rows_rank", ["formatId", "windowStart", "metric", "deckCount", "cardId"])
-@Check("ck_usage_card_rows_format_id", "format_id IN ('1103', '1109')")
+@Check("ck_usage_card_rows_format_id", "format_id IN ('1103', '1109', 'goat')")
 @Check(
 	"ck_usage_card_rows_metric",
 	"metric IN ('monster', 'spell', 'trap', 'extra', 'side')",

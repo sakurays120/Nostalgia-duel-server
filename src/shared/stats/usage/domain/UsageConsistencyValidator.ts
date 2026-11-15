@@ -1,4 +1,8 @@
-import { DECK_TYPE_CATALOG } from "@shared/deck/domain/classifier/DeckClassifier";
+import {
+	DECK_TYPE_CATALOG,
+	supportsDeckMatchups,
+	supportsDeckUsage,
+} from "@shared/deck/domain/classifier/DeckClassifier";
 import { CardUsageRow } from "./CardUsageCalculator";
 import { CdbCardMetadataProvider } from "../infrastructure/cdb/CdbCardMetadataProvider";
 import { DeckMatchupRowData } from "@shared/stats/matchup/domain/DeckMatchupCalculator";
@@ -11,7 +15,7 @@ export interface UsageStatRunData {
 	readonly totalDecks: number;
 	readonly sideKnownDecks: number;
 	readonly publishedAt: Date;
-	/** 1109 批次是否已按对阵矩阵逻辑评估；零对阵行但已评估的批次不再触发换期补建 */
+	/** 批次是否已按对阵矩阵逻辑评估；零对阵行但已评估的批次不再触发换期补建 */
 	readonly matchupsEvaluated?: boolean;
 }
 
@@ -30,7 +34,7 @@ export class UsageConsistencyValidator {
 		metadataProvider?: CdbCardMetadataProvider,
 	): void {
 		// 1. Format ID check
-		if (run.formatId !== "1103" && run.formatId !== "1109") {
+		if (!supportsDeckUsage(run.formatId)) {
 			throw new Error(`Invalid formatId: ${run.formatId}`);
 		}
 
@@ -128,7 +132,7 @@ export class UsageConsistencyValidator {
 			return;
 		}
 
-		if (formatId !== "1109") {
+		if (!supportsDeckMatchups(formatId)) {
 			throw new Error(`Unsupported format for matchups: ${formatId}`);
 		}
 
@@ -137,8 +141,8 @@ export class UsageConsistencyValidator {
 		const seenKeys = new Set<string>();
 
 		for (const row of matchupRows) {
-			if (row.formatId !== "1109") {
-				throw new Error(`Matchup row formatId mismatch: ${row.formatId} !== 1109`);
+			if (row.formatId !== formatId) {
+				throw new Error(`Matchup row formatId mismatch: ${row.formatId} !== ${formatId}`);
 			}
 			if (row.windowStart !== windowStart) {
 				throw new Error(`Matchup row windowStart mismatch: ${row.windowStart} !== ${windowStart}`);

@@ -3,6 +3,7 @@ import { MatchDeckRepository } from "../../domain/MatchDeckRepository";
 import { DownloadMatchDeck } from "../DownloadMatchDeck";
 import { DuelRecordMother } from "@test-support/mothers/room/DuelRecordMother";
 import YGOProDeck from "ygopro-deck-encode";
+import { GOAT_DECK_TEMPLATES } from "../../domain/classifier/GoatDeckTemplates";
 
 describe("ReplayDeckBackfillIntegration (Task 7.6)", () => {
 	// In-memory simulated PostgreSQL store for backfill rehearsal
@@ -135,12 +136,13 @@ describe("ReplayDeckBackfillIntegration (Task 7.6)", () => {
 		clientName: string,
 		hostMain: number[],
 		clientMain: number[],
+		hostExtra = [83764718],
 	): Buffer {
 		const record = DuelRecordMother.create({
 			players: [
 				{
 					name: hostName,
-					deck: new YGOProDeck({ main: hostMain, extra: [83764718], side: [] }),
+					deck: new YGOProDeck({ main: hostMain, extra: hostExtra, side: [] }),
 				},
 				{
 					name: clientName,
@@ -253,6 +255,49 @@ describe("ReplayDeckBackfillIntegration (Task 7.6)", () => {
 			duel_index: 1,
 			replay_data: buildG1Replay("AgentPlayer", "HeroPlayer", agentMain, hbMain),
 		});
+	});
+
+	it("classifies GOAT main and extra cards from the G1 replay", async () => {
+		const horus = GOAT_DECK_TEMPLATES.find(({ code }) => code === "G05")!;
+		const hostMain = [...horus.mainCards, ...Array(40 - horus.mainCards.length).fill(46986414)];
+		const clientMain = [18318842, 18318842, ...Array(38).fill(89631139)];
+		matchesTable.push(
+			{
+				id: "goat-p1",
+				userId: "goat-u1",
+				game_id: "goat-game",
+				format_id: "goat",
+				player_names: "Horus",
+			},
+			{
+				id: "goat-p2",
+				userId: "goat-u2",
+				game_id: "goat-game",
+				format_id: "goat",
+				player_names: "Water",
+			},
+		);
+		replaysTable.push({
+			id: "goat-g1",
+			game_id: "goat-game",
+			format_id: "goat",
+			duel_index: 1,
+			replay_data: buildG1Replay("Horus", "Water", hostMain, clientMain, [...horus.extraCards!]),
+		});
+
+		const service = new ReplayDeckBackfillService(mockDbClient, mockDbClient);
+		const report = await service.run({ formatId: "goat", dryRun: false });
+
+		expect(report.successful).toBe(1);
+		expect(matchDecksTable).toMatchObject([
+			{
+				match_id: "goat-p1",
+				deck_type_code: "G05",
+				extra_cards: horus.extraCards,
+				side_cards: null,
+			},
+			{ match_id: "goat-p2", deck_type_code: "G16", side_cards: null },
+		]);
 	});
 
 	it("rehearses full dry-run and execution backfill cycle across 1103 and 1109", async () => {

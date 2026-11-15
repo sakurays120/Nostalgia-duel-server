@@ -414,7 +414,14 @@ describe("RankedMatchPersistenceService", () => {
 		expect(mockEntityManager.save).toHaveBeenCalledTimes(initialSaveCalls);
 	});
 
-	it("persists match_decks for both players when both user profiles and deck snapshots are valid", async () => {
+	it.each([
+		{ formatId: "1109", core: [69884162, 69884162, 33846209, 33846209, 37412656], code: "D02" },
+		{
+			formatId: "goat",
+			core: [22609617, 22609617, 22609617, 32807846, 32807846, 18318842, 18318842],
+			code: "G16",
+		},
+	])("persists and classifies both valid $formatId snapshots", async ({ formatId, core, code }) => {
 		const user1 = await UserProfile.create({
 			id: "user-1",
 			username: "Player1",
@@ -431,19 +438,14 @@ describe("RankedMatchPersistenceService", () => {
 		});
 		userProfileRepository.findByUsername.mockResolvedValueOnce(user1).mockResolvedValueOnce(user2);
 
-		const main1 = Array(40).fill(69884162);
-		main1[0] = 69884162;
-		main1[1] = 69884162;
-		main1[2] = 33846209;
-		main1[3] = 33846209;
-		main1[4] = 37412656;
+		const main1 = [...core, ...Array(40 - core.length).fill(10000)];
 
 		const main2 = Array(40).fill(10000);
 
 		const event = new GameOverDomainEvent({
 			bestOf: 3,
 			date: new Date("2026-09-01T20:00:00Z"),
-			formatId: "1109",
+			formatId,
 			banListHash: 1109,
 			banListName: "OCG 1109",
 			ranked: true,
@@ -485,15 +487,15 @@ describe("RankedMatchPersistenceService", () => {
 		expect(matchDeckCreations).toHaveLength(2);
 
 		const player1Deck = matchDeckCreations[0][1];
-		expect(player1Deck.formatId).toBe("1109");
-		expect(player1Deck.deckTypeCode).toBe("D02"); // HB
+		expect(player1Deck.formatId).toBe(formatId);
+		expect(player1Deck.deckTypeCode).toBe(code);
 		expect(player1Deck.snapshotSource).toBe("online");
 		expect(player1Deck.mainCards).toEqual(main1);
 		expect(player1Deck.extraCards).toEqual([20000]);
 		expect(player1Deck.sideCards).toEqual([30000]);
 
 		const player2Deck = matchDeckCreations[1][1];
-		expect(player2Deck.formatId).toBe("1109");
+		expect(player2Deck.formatId).toBe(formatId);
 		expect(player2Deck.deckTypeCode).toBe("OTHERS");
 		expect(player2Deck.snapshotSource).toBe("online");
 	});

@@ -1,4 +1,7 @@
-import { DECK_TYPE_CATALOG } from "@shared/deck/domain/classifier/DeckClassifier";
+import {
+	DECK_TYPE_CATALOG,
+	supportsDeckMatchups,
+} from "@shared/deck/domain/classifier/DeckClassifier";
 import { HalfYearWindow } from "../../usage/domain/HalfYearWindow";
 import { UsageStatRunData } from "../../usage/domain/UsageConsistencyValidator";
 import { DeckMatchupRowData } from "../domain/DeckMatchupCalculator";
@@ -6,7 +9,7 @@ import { TopDeckSelector } from "../domain/TopDeckSelector";
 
 export class FormatNotSupportedError extends Error {
 	constructor(format: string) {
-		super(`Format not supported for deck stats: ${format}. Only 1109 is currently supported.`);
+		super(`Format not supported for deck stats: ${format}`);
 		this.name = "FormatNotSupportedError";
 	}
 }
@@ -61,7 +64,7 @@ export class GetDeckMatchupStatsUseCase {
 	constructor(private readonly repository: MatchupQueryRepository) {}
 
 	public async execute(query: { format: string; period?: string }): Promise<DeckStatsResponse> {
-		if (query.format !== "1109") {
+		if (!supportsDeckMatchups(query.format)) {
 			throw new FormatNotSupportedError(query.format);
 		}
 
@@ -186,7 +189,7 @@ export class GetDeckMatchupStatsUseCase {
 	}
 
 	public async getPeriods(format: string): Promise<{ format: string; periods: string[] }> {
-		if (format !== "1109") {
+		if (!supportsDeckMatchups(format)) {
 			throw new FormatNotSupportedError(format);
 		}
 

@@ -1,3 +1,4 @@
+import { supportsDeckMatchups } from "@shared/deck/domain/classifier/DeckClassifier";
 import { CardUsageCalculator, CardUsageRow } from "../domain/CardUsageCalculator";
 import { DeckUsageCalculator, PlayerMatchDeckSnapshot } from "../domain/DeckUsageCalculator";
 import { HalfYearWindow } from "../domain/HalfYearWindow";
@@ -59,6 +60,7 @@ export class RebuildUsageStatisticsUseCase {
 	constructor(
 		private readonly repository: UsageStatisticsRepository,
 		private readonly metadataProvider: CdbCardMetadataProvider,
+		private readonly goatMetadataProvider = metadataProvider,
 	) {}
 
 	public async rebuildFormatWindow(
@@ -78,20 +80,21 @@ export class RebuildUsageStatisticsUseCase {
 		}
 
 		try {
-			// 1. Read usage snapshots and (for 1109) physical match perspectives from the
+			const metadata = formatId === "goat" ? this.goatMetadataProvider : this.metadataProvider;
+			await metadata.load();
+			const includeMatchups = supportsDeckMatchups(formatId);
+			// 1. Read usage snapshots and physical match perspectives from the
 			// same REPEATABLE READ snapshot so the Top 16 and the matchup matrix always
 			// describe the same point in time
 			const facts = await this.repository.readFormatWindowFacts(
 				formatId,
 				window.windowStart,
 				window.dataEndExclusive,
-				{ includePhysicalMatchPerspectives: formatId === "1109" },
+				{ includePhysicalMatchPerspectives: includeMatchups },
 			);
 
 			// 2. Deck usage calculation
-			const deckCalculator = new DeckUsageCalculator(formatId, (id) =>
-				this.metadataProvider.hasCard(id),
-			);
+			const deckCalculator = new DeckUsageCalculator(formatId, (id) => metadata.hasCard(id));
 			const deckResult = deckCalculator.calculate(facts.snapshots);
 
 			const deckRows: UsageDeckRowData[] = [];
@@ -105,11 +108,7 @@ export class RebuildUsageStatisticsUseCase {
 			}
 
 			// 3. Card usage calculation
-			const cardCalculator = new CardUsageCalculator(
-				this.metadataProvider,
-				formatId,
-				window.windowStart,
-			);
+			const cardCalculator = new CardUsageCalculator(metadata, formatId, window.windowStart);
 			const cardRows = cardCalculator.calculate(deckResult.validSnapshots);
 
 			// 4. Header run data
@@ -121,15 +120,15 @@ export class RebuildUsageStatisticsUseCase {
 				totalDecks: deckResult.totalDecks,
 				sideKnownDecks: deckResult.sideKnownDecks,
 				publishedAt: new Date(),
-				matchupsEvaluated: formatId === "1109",
+				matchupsEvaluated: includeMatchups,
 			};
 
-			// 5. Matchup calculation for 1109
+			// 5. Matchup calculation
 			let matchupRows: DeckMatchupRowData[] = [];
 			let admittedPhysicalMatches = 0;
 			let topDeckCodes: string[] = [];
 
-			if (formatId === "1109") {
+			if (includeMatchups) {
 				topDeckCodes = TopDeckSelector.selectTopDecks(formatId, deckResult.deckCounts);
 				const matchupResult = DeckMatchupCalculator.calculate(
 					formatId,
@@ -150,7 +149,7 @@ export class RebuildUsageStatisticsUseCase {
 			}
 
 			// 6. Pre-publish validation
-			UsageConsistencyValidator.validate(runData, deckRows, cardRows, this.metadataProvider);
+			UsageConsistencyValidator.validate(runData, deckRows, cardRows, metadata);
 
 			// 7. Atomic publish
 			await this.repository.publishPeriodStatistics(runData, deckRows, cardRows, matchupRows);
@@ -162,7 +161,7 @@ export class RebuildUsageStatisticsUseCase {
 				dataEndExclusive: window.dataEndExclusive,
 				totalDecks: deckResult.totalDecks,
 				sideKnownDecks: deckResult.sideKnownDecks,
-				admittedPhysicalMatches: formatId === "1109" ? admittedPhysicalMatches : undefined,
+				admittedPhysicalMatches: includeMatchups ? admittedPhysicalMatches : undefined,
 				durationMs: Date.now() - startTime,
 			};
 		} catch (error) {
@@ -179,39 +178,8 @@ export class RebuildUsageStatisticsUseCase {
 	}
 
 	public async rebuildDaily(referenceDate?: string | Date): Promise<RebuildReport> {
-		try {
-			await this.metadataProvider.load();
-		} catch (error) {
-			const errMsg = error instanceof Error ? error.message : String(error);
-			return {
-				success: false,
-				formatReports: [
-					{
-						success: false,
-						formatId: "1103",
-						windowStart: "",
-						dataEndExclusive: "",
-						totalDecks: 0,
-						sideKnownDecks: 0,
-						durationMs: 0,
-						error: errMsg,
-					},
-					{
-						success: false,
-						formatId: "1109",
-						windowStart: "",
-						dataEndExclusive: "",
-						totalDecks: 0,
-						sideKnownDecks: 0,
-						durationMs: 0,
-						error: errMsg,
-					},
-				],
-			};
-		}
-
 		const currentWindow = HalfYearWindow.current(referenceDate);
-		const formats = [];
+		const formats = ["1103", "1109", "goat"];
 		const results: RebuildResult[] = [];
 
 		for (const formatId of formats) {
@@ -219,7 +187,8 @@ export class RebuildUsageStatisticsUseCase {
 			// never evaluated (a finalized batch with zero matchup rows is complete)
 			const prevWindow = HalfYearWindow.previousOf(currentWindow.period);
 			const prevRun = await this.repository.findRun(formatId, prevWindow.windowStart);
-			const prevMatchupsEvaluated = formatId !== "1109" || prevRun?.matchupsEvaluated === true;
+			const prevMatchupsEvaluated =
+				!supportsDeckMatchups(formatId) || prevRun?.matchupsEvaluated === true;
 
 			if (
 				!prevRun ||
@@ -243,39 +212,8 @@ export class RebuildUsageStatisticsUseCase {
 		periodStr: string,
 		referenceDate?: string | Date,
 	): Promise<RebuildReport> {
-		try {
-			await this.metadataProvider.load();
-		} catch (error) {
-			const errMsg = error instanceof Error ? error.message : String(error);
-			return {
-				success: false,
-				formatReports: [
-					{
-						success: false,
-						formatId: "1103",
-						windowStart: "",
-						dataEndExclusive: "",
-						totalDecks: 0,
-						sideKnownDecks: 0,
-						durationMs: 0,
-						error: errMsg,
-					},
-					{
-						success: false,
-						formatId: "1109",
-						windowStart: "",
-						dataEndExclusive: "",
-						totalDecks: 0,
-						sideKnownDecks: 0,
-						durationMs: 0,
-						error: errMsg,
-					},
-				],
-			};
-		}
-
 		const window = HalfYearWindow.fromPeriodString(periodStr, referenceDate);
-		const formats = [];
+		const formats = ["1103", "1109", "goat"];
 		const results: RebuildResult[] = [];
 
 		for (const formatId of formats) {

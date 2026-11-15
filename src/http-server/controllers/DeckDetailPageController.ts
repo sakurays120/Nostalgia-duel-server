@@ -1,3 +1,4 @@
+import { supportsDeckMatchups } from "@shared/deck/domain/classifier/DeckClassifier";
 import { Request, Response } from "express";
 import { config } from "src/config";
 import { getNostalgiaFormat } from "@ygopro/room/domain/NostalgiaFormat";
@@ -392,7 +393,7 @@ export function renderDeckDetailPage(formatId: string): string {
 	</main>
 
 	${
-		formatId === "1109"
+		supportsDeckMatchups(formatId)
 			? `
 	<script>
 		(function() {

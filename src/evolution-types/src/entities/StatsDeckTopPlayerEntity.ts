@@ -5,7 +5,7 @@ import { UsageStatRunEntity } from "./UsageStatRunEntity";
 	name: "stats_deck_top_players",
 	comment: "按赛制和自然半年保存各具名卡组专精玩家胜率 Top10",
 })
-@Check("ck_stats_deck_top_players_format", "format_id = '1109'")
+@Check("ck_stats_deck_top_players_format", "format_id IN ('1109', 'goat')")
 @Check("ck_stats_deck_top_players_rank", "rank BETWEEN 1 AND 10")
 @Check("ck_stats_deck_top_players_matches", "matches >= 25")
 @Check("ck_stats_deck_top_players_record_sum", "matches = wins + losses")

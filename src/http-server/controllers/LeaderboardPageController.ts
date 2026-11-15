@@ -1,3 +1,7 @@
+import {
+	supportsDeckUsage,
+	supportsDeckMatchups,
+} from "@shared/deck/domain/classifier/DeckClassifier";
 import { Request, Response } from "express";
 import { config } from "src/config";
 import { getNostalgiaFormat } from "@ygopro/room/domain/NostalgiaFormat";
@@ -372,8 +376,8 @@ export function renderLeaderboardPage(formatId: string): string {
 			<button class="tab-btn active" data-tab="rooms">房间列表</button>
 			<button class="tab-btn" data-tab="replays">录像下载</button>
 			<button class="tab-btn" data-tab="ladder">天梯排行</button>
-			${formatId === "goat" ? "" : `<a href="/leaderboards/${formatId}/usage" class="tab-btn" style="text-decoration: none; display: inline-flex; align-items: center;">使用率</a>`}
-			${formatId === "1109" ? `<a href="/leaderboards/${formatId}/deck-stats" class="tab-btn" style="text-decoration: none; display: inline-flex; align-items: center;">卡组胜率</a>` : ""}
+			${supportsDeckUsage(formatId) ? `<a href="/leaderboards/${formatId}/usage" class="tab-btn" style="text-decoration: none; display: inline-flex; align-items: center;">使用率</a>` : ""}
+			${supportsDeckMatchups(formatId) ? `<a href="/leaderboards/${formatId}/deck-stats" class="tab-btn" style="text-decoration: none; display: inline-flex; align-items: center;">卡组胜率</a>` : ""}
 		</nav>
 	</header>
 
