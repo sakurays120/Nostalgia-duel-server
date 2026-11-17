@@ -14,6 +14,7 @@ import {
 	IndexResponse,
 	OcgcoreScriptConstants as C,
 	YGOProMsgResponseBase,
+	YGOProMsgAnnounceNumber,
 	YGOProMsgRetry,
 	YGOProMsgSelectBattleCmd,
 	YGOProMsgSelectCard,
@@ -37,10 +38,13 @@ import { createDuelCoreWrapper } from "@ygopro/ocgcore-worker/duel-core";
 import type { NostalgiaFormatId } from "@ygopro/room/domain/NostalgiaFormat";
 import { calculateDuelOptions } from "@ygopro/utils/calculate-duel-options";
 import { CardStorage } from "@ygopro/ygopro/card-storage";
-import { resolveFormatPreloadScriptPaths } from "@ygopro/ygopro/ResourcePoolResolver";
+import {
+	resolveBaseDatabaseDirectory,
+	resolveFormatPreloadScriptPaths,
+} from "@ygopro/ygopro/ResourcePoolResolver";
 import { readWhitelistCardIds } from "@ygopro/ygopro/YGOProResourceLoader";
 
-export type FormatId = "1103" | "1109";
+export type FormatId = NostalgiaFormatId;
 
 /** harmless monster used to pad test decks to 40 cards (サイバー・ドラゴン) */
 const DEFAULT_DECK_FILLER = 70095154;
@@ -100,20 +104,26 @@ export class HistoricalRulingsDriver {
 
 	static async create(
 		formatId: FormatId,
-		coreFormat?: NostalgiaFormatId,
+		coreFormat: NostalgiaFormatId = formatId,
 	): Promise<HistoricalRulingsDriver> {
 		const SQL = await initSqlJs();
+		const databasePath = resolveBaseDatabaseDirectory(
+			RESOURCE_ROOT,
+			formatId === "goat" ? "goat" : "2011",
+		);
 		const cdb = new YGOProCdb(
-			new SQL.Database(fs.readFileSync(path.join(RESOURCE_ROOT, "ygopro", "base", "cards.cdb"))),
+			new SQL.Database(fs.readFileSync(path.join(databasePath, "cards.cdb"))),
 		).noTexts();
 		const baseStorage = CardStorage.fromCards(cdb.step());
 		cdb.finalize();
-		const pool = await readWhitelistCardIds(
-			path.join(RESOURCE_ROOT, "ygopro", "formats", formatId, "lflist.conf"),
-		);
-		const storage = baseStorage.filterForFormat(pool);
-		const wrapper = await createDuelCoreWrapper(coreFormat);
 		const formatPath = path.join(RESOURCE_ROOT, "ygopro", "formats", formatId);
+		const storage =
+			formatId === "goat"
+				? baseStorage
+				: baseStorage.filterForFormat(
+						await readWhitelistCardIds(path.join(formatPath, "lflist.conf")),
+					);
+		const wrapper = await createDuelCoreWrapper(coreFormat);
 		const basePath = path.join(RESOURCE_ROOT, "ygopro", "base");
 		wrapper.setScriptReader(await DirScriptReaderEx(formatPath, basePath));
 		wrapper.setCardReader(storage.toCardReader());
@@ -469,7 +479,7 @@ export class HistoricalTestDuel {
 			const places = msg.getSelectablePlaces();
 			return places.length > 0 ? msg.prepareResponse([places[0]]) : msg.prepareResponse([]);
 		}
-		if (msg instanceof YGOProMsgSelectOption) {
+		if (msg instanceof YGOProMsgSelectOption || msg instanceof YGOProMsgAnnounceNumber) {
 			return msg.prepareResponse(IndexResponse(0));
 		}
 		if (msg instanceof YGOProMsgSelectSum) {

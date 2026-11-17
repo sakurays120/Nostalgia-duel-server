@@ -5,6 +5,8 @@ function c6733059.initial_effect(c)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetCode(EVENT_FREE_CHAIN)
 	e1:SetHintTiming(0,TIMINGS_CHECK_MONSTER)
+	-- Keep the core from merging another effect into this card activation.
+	e1:SetOperation(function() end)
 	c:RegisterEffect(e1)
 	--instant(chain)
 	local e2=Effect.CreateEffect(c)

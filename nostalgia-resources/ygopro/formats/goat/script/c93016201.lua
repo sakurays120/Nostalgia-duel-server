@@ -4,6 +4,8 @@ function c93016201.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetCode(EVENT_FREE_CHAIN)
+	-- Keep the core from merging another effect into this card activation.
+	e1:SetOperation(function() end)
 	c:RegisterEffect(e1)
 	--instant
 	local e3=Effect.CreateEffect(c)
