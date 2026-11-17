@@ -237,6 +237,21 @@ describe("DeckClassifier (1109 & 1103)", () => {
 });
 
 describe("GOAT YDK templates", () => {
+	it.each([
+		{ nameZh: "卡通", code: "G36", mainCards: [89997728, 89997728, 89997728, 15259703, 15259703] },
+		{
+			nameZh: "蜘蛛Beat",
+			code: "G37",
+			mainCards: [94773007, 94773007, 41420027, 41420027, 41420027],
+		},
+	])("classifies $nameZh with the required copies", ({ nameZh, code, mainCards }) => {
+		expect(classifyDeck("goat", [...mainCards, 74131780])).toMatchObject({
+			deckTypeCode: code,
+			deckTypeNameZh: nameZh,
+		});
+		expect(classifyDeck("goat", mainCards.slice(1)).deckTypeCode).toBe("OTHERS");
+	});
+
 	it.each(GOAT_DECK_TEMPLATES)("classifies template $nameZh", (template) => {
 		expect(classifyDeck("goat", template.mainCards, undefined, template).deckTypeCode).toBe(
 			template.code,

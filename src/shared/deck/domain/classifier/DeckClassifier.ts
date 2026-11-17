@@ -15,7 +15,7 @@ export interface DeckTypeMetadata {
 }
 
 export const CLASSIFIER_VERSIONS: Record<string, string> = {
-	goat: "goat-ydk-v1",
+	goat: "goat-ydk-v2",
 	"1109": "1109-c9ba01c-v2",
 	"1103": "1103-fallback-v1",
 };

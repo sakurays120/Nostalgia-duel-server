@@ -1,4 +1,4 @@
-// Imported in archive order from GOAT牌组（中文命名）.zip.
+// Initially imported in archive order from GOAT牌组（中文命名）.zip.
 // Each repeated number represents one physical copy.
 export interface GoatDeckTemplate {
 	code: string;
@@ -177,5 +177,11 @@ export const GOAT_DECK_TEMPLATES: readonly GoatDeckTemplate[] = [
 			34124316, 33508719, 38699854, 38699854, 43434803, 43434803, 55144522, 70368879, 70368879,
 			72892473, 79571449, 14087893, 14087893,
 		],
+	},
+	{ code: "G36", nameZh: "卡通", mainCards: [89997728, 89997728, 89997728, 15259703, 15259703] },
+	{
+		code: "G37",
+		nameZh: "蜘蛛Beat",
+		mainCards: [94773007, 94773007, 41420027, 41420027, 41420027],
 	},
 ];
