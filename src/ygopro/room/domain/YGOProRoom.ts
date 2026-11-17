@@ -54,6 +54,9 @@ import { CardYGOProRepository } from "@ygopro/card/infrastructure/CardYGOProRepo
 import { YGOProBanList } from "@ygopro/ban-list/domain/YGOProBanList";
 import { getNostalgiaFormat, type NostalgiaFormatId } from "@ygopro/room/domain/NostalgiaFormat";
 
+// KoishiPro registers an empty LFList named N/A with hash 0.
+const CLIENT_NO_LIMIT_LFLIST_HASH = 0;
+
 /**
  * Bounded reconnect window for started, non-AI rooms whose players all
  * disconnected: the room and its seats are retained this long so the original
@@ -817,9 +820,30 @@ export class YGOProRoom extends YgoRoom {
 
 		player.setSocket(socket);
 		player.reconnecting();
-		player.sendMessageToClient(
-			this._messageRepository.joinGameMessage(this.hostInfo, this.banListHash),
-		);
+		const lflist =
+			this.duelState === DuelState.SIDE_DECKING && this.usesSideDeckingListOverride()
+				? CLIENT_NO_LIMIT_LFLIST_HASH
+				: this.banListHash;
+		this.sendPlayerJoinState(player, lflist);
+	}
+
+	public refreshSideDeckingList(player: YGOProClient): void {
+		if (!this.usesSideDeckingListOverride()) {
+			return;
+		}
+
+		// JOIN_GAME resets the client's lobby roster and opens the lobby.
+		// Restore the seats and close the lobby before CHANGE_SIDE opens the editor.
+		this.sendPlayerJoinState(player, CLIENT_NO_LIMIT_LFLIST_HASH);
+		player.sendMessageToClient(this._messageRepository.duelStartMessage());
+	}
+
+	private usesSideDeckingListOverride(): boolean {
+		return this.formatId === "goat" && this.isMatch;
+	}
+
+	private sendPlayerJoinState(player: YGOProClient, lflist: number): void {
+		player.sendMessageToClient(this._messageRepository.joinGameMessage(this.hostInfo, lflist));
 		const type = player.host ? player.position | 0x10 : player.position;
 		player.sendMessageToClient(this._messageRepository.typeChangeMessageFromType(type));
 		this._players.forEach((_player: YGOProClient) => {

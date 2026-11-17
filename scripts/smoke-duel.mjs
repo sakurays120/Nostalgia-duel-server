@@ -26,6 +26,8 @@
  * 退出码：0 = 全部通过；1 = 任一格式失败（超时/被拒/校验失败）。
  */
 
+import assert from "node:assert/strict";
+
 const net = await import("node:net").then((m) => m.default);
 import { buildDeck } from "./support/smoke-deck.mjs";
 
@@ -57,12 +59,12 @@ const joinGameFrame = (pass) => {
 	encodeUtf16LE(pass, 20).copy(payload, 8);
 	return buildFrame(0x12, payload);
 };
-const updateDeckFrame = (main) => {
-	const payload = Buffer.alloc(8 + main.length * 4);
+const updateDeckFrame = (main, side = []) => {
+	const payload = Buffer.alloc(8 + (main.length + side.length) * 4);
 	payload.writeUInt32LE(main.length, 0);
-	payload.writeUInt32LE(0, 4); // 无副卡组
+	payload.writeUInt32LE(side.length, 4);
 	let offset = 8;
-	for (const code of main) {
+	for (const code of [...main, ...side]) {
 		payload.writeUInt32LE(code, offset);
 		offset += 4;
 	}
@@ -131,11 +133,11 @@ function waitFor(frames, command, timeoutMs = 15000) {
 }
 
 /** 等待服务器发出指定命令帧至少 count 次（默认 15 秒超时）。 */
-function waitForCount(frames, command, count, timeoutMs = 15000) {
+function waitForCount(frames, command, count, timeoutMs = 15000, matchesPayload = () => true) {
 	const started = Date.now();
 	return new Promise((resolve, reject) => {
 		const timer = setInterval(() => {
-			const seen = frames.filter((f) => f[2] === command).length;
+			const seen = frames.filter((f) => f[2] === command && matchesPayload(f)).length;
 			if (seen >= count) {
 				clearInterval(timer);
 				resolve();
@@ -157,9 +159,18 @@ function waitForCount(frames, command, count, timeoutMs = 15000) {
 
 async function runFormat(formatId) {
 	const deck = await buildDeck(formatId);
+	const side = formatId === "goat" ? [deck[1]] : [];
 	const suffix = Date.now().toString(36);
 	const host = await connect(`Smoke-${formatId}-A-${suffix}`, `${formatId}#1001`);
-	const guest = await connect(`Smoke-${formatId}-B-${suffix}`, `${formatId}#1001`);
+	const guestName = `Smoke-${formatId}-B-${suffix}`;
+	const guest = await connect(guestName, `${formatId}#1001`);
+
+	// GOAT hash pinned in the resource lock.
+	const goatHash = 2979475014;
+	for (const player of [host, guest]) {
+		const join = player.frames.find((f) => f[2] === 0x12);
+		if (formatId === "goat") assert.equal(join.readUInt32LE(3), goatHash);
+	}
 
 	// 第三个连接：房间已满，应被准入为观战者（OBSERVER），收到 JOIN 确认与
 	// 观众数广播；同时所有在场客户端会再次收到 HS_WATCH_CHANGE。
@@ -172,9 +183,19 @@ async function runFormat(formatId) {
 	// 应再收到 1 次（观众 1）——证明观战者被房间真正接纳。
 	await waitForCount(host.frames, 0x22, 2); // HS_WATCH_CHANGE x2
 
+	if (formatId === "goat") {
+		const limited = 72989439;
+		const invalidDeck = [limited, limited, ...deck.slice(2)];
+		host.socket.write(updateDeckFrame(invalidDeck));
+		await waitFor(host.frames, 0x02);
+		const error = host.frames.find((f) => f[2] === 0x02);
+		assert.equal(error[3], 2); // DECKERROR
+		assert.equal(error.readUInt32LE(7), 0x10000000 | limited);
+	}
+
 	// 提交真实卡组；等待双方 READY（HS_PLAYER_CHANGE）后由房主开战。
-	host.socket.write(updateDeckFrame(deck));
-	guest.socket.write(updateDeckFrame(deck));
+	host.socket.write(updateDeckFrame(deck, side));
+	guest.socket.write(updateDeckFrame(deck, side));
 	await new Promise((resolve) => setTimeout(resolve, 800));
 
 	host.socket.write(tryStartFrame());
@@ -197,7 +218,42 @@ async function runFormat(formatId) {
 	await waitFor(spectator.frames, 0x01);
 	host.socket.write(surrenderFrame());
 	await waitFor(host.frames, 0x07); // STOC_CHANGE_SIDE：首局结束、比赛未完，进入换备
-	await new Promise((resolve) => setTimeout(resolve, 1500));
+	await waitFor(guest.frames, 0x07);
+	for (const player of [host, guest]) {
+		const beforeSide = player.frames.slice(
+			0,
+			player.frames.findIndex((f) => f[2] === 0x07),
+		);
+		const joinFrames = beforeSide.filter((f) => f[2] === 0x12);
+		if (formatId === "goat") {
+			assert.deepEqual(
+				joinFrames.map((f) => f.readUInt32LE(3)),
+				[goatHash, 0],
+			);
+			assert.ok(beforeSide.slice(beforeSide.indexOf(joinFrames[1]) + 1).some((f) => f[2] === 0x15));
+		} else {
+			assert.equal(joinFrames.length, 1);
+		}
+	}
+
+	if (formatId === "goat") {
+		host.socket.write(updateDeckFrame([deck[1], ...deck.slice(1)], side));
+		await waitForCount(host.frames, 0x02, 2);
+		assert.equal(host.frames.filter((f) => f[2] === 0x02)[1][3], 3); // SIDEERROR
+		const reconnected = await connect(guestName, `${formatId}#1001`, [0x12, 0x13, 0x15, 0x07]);
+		const rejoin = reconnected.frames.find((f) => f[2] === 0x12);
+		assert.equal(rejoin.readUInt32LE(3), 0);
+
+		const swappedMain = [side[0], ...deck.slice(1)];
+		const swappedSide = [deck[0]];
+		host.socket.write(updateDeckFrame(swappedMain, swappedSide));
+		reconnected.socket.write(updateDeckFrame(swappedMain, swappedSide));
+		await waitForCount(host.frames, 0x04, 2); // The first-game loser chooses.
+		host.socket.write(orderChoiceFrame());
+		// MSG_START (0x04) is nested inside STOC_GAME_MSG (0x01).
+		await waitForCount(host.frames, 0x01, 2, 15000, (f) => f[3] === 0x04);
+		reconnected.socket.destroy();
+	}
 
 	host.socket.destroy();
 	guest.socket.destroy();

@@ -553,6 +553,7 @@ export class YGOProDuelingState extends YGOProRoomState {
 		this.room.sideDecking();
 
 		this.room.players.forEach((client: YGOProClient) => {
+			this.room.refreshSideDeckingList(client);
 			client.sendMessageToClient(this.room.messageSender.changeSideMessage());
 		});
 

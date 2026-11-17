@@ -31,6 +31,13 @@
 - **WHEN** TCP 连接发送截断帧、非法长度或超过服务器上限的帧
 - **THEN** 服务器不创建或修改房间，不重复处理任何消息，并关闭或拒绝该连接且不影响其他连接
 
+#### Scenario: GOAT 换 Side 时刷新客户端禁卡表
+- **WHEN** GOAT 三局两胜的玩家首次入房
+- **THEN** `STOC_JOIN_GAME.info.lflist` 为房间的 GOAT 禁卡表哈希
+- **WHEN** GOAT 三局两胜中已入座的玩家进入换 Side 或在换 Side 时重连
+- **THEN** 在 `STOC_CHANGE_SIDE` 前通过 `STOC_JOIN_GAME.info.lflist` 发送 N/A（`0`），并恢复客户端的决斗视图
+- **AND** 服务端建卡组、初始验卡与换 Side 验卡仍使用房间原有的 GOAT 禁卡表哈希
+
 ### Requirement: 保留现有 YGOPro 游戏能力
 服务器必须（SHALL）保留 YGOPro 房间创建与加入、怀旧赛制选择、卡组校验、决斗状态流转、断线处理、受支持的重连、聊天、表情、录像生成、匹配和 WindBot 行为。
 

@@ -9,6 +9,7 @@ import { YGOProRoom } from "../YGOProRoom";
 import { YGOProSideDeckingState } from "./YGOProSideDeckingState";
 import { YGOProDeckCreator } from "@ygopro/deck/application/YGOProDeckCreator";
 import { YGOProDeckValidator } from "@ygopro/deck/domain/YGOProDeckValidator";
+import { YGOProBanList } from "@ygopro/ban-list/domain/YGOProBanList";
 import { BanListDeckError } from "@shared/deck/domain/errors/BanListDeckError";
 import { NotOfficialCardError } from "@shared/deck/domain/errors/NotOfficialCardError";
 import { encodeDeckErrorCode } from "@shared/deck/domain/errors/encodeDeckErrorCode";
@@ -281,7 +282,7 @@ describe("YGOProSideDeckingState.handleUpdateDeck — deck error code is encoded
 
 		mockRoom = {
 			players: [], // empty → constructor schedules no side-deck timers
-			banListHash: 0,
+			banListHash: 2979475014,
 			hostInfo: { rule: 0 }, // referenced by the warn() log on the error paths
 			shouldValidateDeck: jest.fn().mockReturnValue(true),
 			notReadyUnsafe: jest.fn(),
@@ -321,6 +322,9 @@ describe("YGOProSideDeckingState.handleUpdateDeck — deck error code is encoded
 		mockDeckCreator.build.mockResolvedValue(deckError as never);
 
 		await emitUpdateDeck();
+		expect(mockDeckCreator.build).toHaveBeenCalledWith(
+			expect.objectContaining({ banListHash: 2979475014 }),
+		);
 
 		expect(errorMessageMock()).toHaveBeenCalledWith(
 			ErrorMessageType.DECKERROR,
@@ -330,6 +334,41 @@ describe("YGOProSideDeckingState.handleUpdateDeck — deck error code is encoded
 			ErrorMessageType.DECKERROR,
 			deckError.type, // the old bug: raw unshifted type
 		);
+	});
+
+	it("rejects an over-limit GOAT card after the side deck passes the card-count comparison", async () => {
+		const limited = 72989439;
+		const banList = new YGOProBanList();
+		banList.setHash(mockRoom.banListHash);
+		banList.add(limited, 1);
+		const validator = new YGOProDeckValidator(
+			{
+				rule: 1,
+				mainMin: 40,
+				mainMax: 60,
+				sideMin: 0,
+				sideMax: 15,
+				extraMin: 0,
+				extraMax: 15,
+				maxDeckPoints: 100,
+			},
+			banList,
+		);
+		mockDeckValidator.validate.mockImplementation((deck) => validator.validate(deck));
+		const main = [
+			{ code: limited },
+			{ code: limited },
+			...Array.from({ length: 38 }, (_, i) => ({ code: i + 1 })),
+		];
+		mockDeckCreator.build.mockResolvedValue({ main, side: [], extra: [], allCards: main } as never);
+
+		await emitUpdateDeck();
+
+		expect(errorMessageMock()).toHaveBeenCalledWith(
+			ErrorMessageType.DECKERROR,
+			0x10000000 | limited,
+		);
+		expect(mockRoom.setDecksToPlayerUnsafe).not.toHaveBeenCalled();
 	});
 
 	it("sends DECKERROR with the encoded code when validation fails", async () => {
