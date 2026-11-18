@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # 每日使用率统计重建（宝塔 / crontab 调用）
 #
-# 推荐 crontab（服务器本地时区为 Asia/Shanghai 时，北京时间每天 01:00）：
-#   0 1 * * * /bin/bash /www/wwwroot/duel-server-goat/Nostalgia-duel-server-goat-rule1/scripts/rebuild-usage.sh
+# 推荐 crontab（服务器本地时区为 Asia/Shanghai 时，北京时间每天 03:00，与运维手册一致）：
+#   0 3 * * * /bin/bash /www/wwwroot/duel-server-goat/Nostalgia-duel-server-goat-rule1/scripts/rebuild-usage.sh
 #
 # 说明：
 #   - CLI 依赖当前工作目录（读 cwd 下的 .env 与 nostalgia-resources），
