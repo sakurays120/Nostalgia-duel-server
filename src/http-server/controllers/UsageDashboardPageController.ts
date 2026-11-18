@@ -427,7 +427,8 @@ export function renderUsageDashboardPage(formatId: string): string {
 			page: 1,
 			pageSize: 50,
 			total: 0,
-			periodsList: []
+			periodsList: [],
+			periodsLoaded: false
 		};
 
 		function parseUrlParams() {
@@ -476,6 +477,7 @@ export function renderUsageDashboardPage(formatId: string): string {
 				})
 				.then(function(data) {
 					state.periodsList = data.periods || [];
+					state.periodsLoaded = true;
 					var select = document.getElementById("select-period");
 					select.innerHTML = "";
 					if (state.periodsList.length === 0) {
@@ -483,6 +485,7 @@ export function renderUsageDashboardPage(formatId: string): string {
 						opt.value = "";
 						opt.textContent = "暂无可用的半年度统计";
 						select.appendChild(opt);
+						renderUsageUnavailable("暂无可用的半年度统计，请先执行使用率重建。");
 						return;
 					}
 					state.periodsList.forEach(function(p) {
@@ -498,7 +501,24 @@ export function renderUsageDashboardPage(formatId: string): string {
 				});
 		}
 
+		function renderUsageUnavailable(message) {
+			document.getElementById("usage-table-body").innerHTML = '<tr><td colspan="8" class="info-box" style="color:var(--danger);">' + escapeHtml(message) + '</td></tr>';
+			document.getElementById("stat-window-range").textContent = "-";
+			document.getElementById("stat-data-end").textContent = "-";
+			document.getElementById("stat-total-decks").textContent = "0";
+			document.getElementById("stat-side-known-decks").textContent = "0";
+			document.getElementById("stat-published-at").textContent = "-";
+			document.getElementById("stat-notice").style.display = "none";
+			document.getElementById("page-info").textContent = "第 1 / 1 页";
+			document.getElementById("btn-prev-page").disabled = true;
+			document.getElementById("btn-next-page").disabled = true;
+		}
+
 		function fetchUsageData() {
+			if (state.periodsLoaded && state.periodsList.length === 0) {
+				renderUsageUnavailable("暂无可用的半年度统计，请先执行使用率重建。");
+				return;
+			}
 			var tbody = document.getElementById("usage-table-body");
 			tbody.innerHTML = '<tr><td colspan="8" class="info-box">正在加载使用率数据...</td></tr>';
 			var url = "/api/ladder/" + FORMAT + "/usage?metric=" + state.metric + "&page=" + state.page + "&pageSize=" + state.pageSize;
@@ -522,10 +542,11 @@ export function renderUsageDashboardPage(formatId: string): string {
 					renderPagination(data);
 				})
 				.catch(function(err) {
-					tbody.innerHTML = '<tr><td colspan="8" class="info-box" style="color:var(--danger);">' + escapeHtml(err.message) + '</td></tr>';
-					document.getElementById("page-info").textContent = "第 1 / 1 页";
-					document.getElementById("btn-prev-page").disabled = true;
-					document.getElementById("btn-next-page").disabled = true;
+					var message = err.message || "请求失败";
+					if (/Usage statistics not ready/i.test(message)) {
+						message = "该半年度统计尚未生成或读取失败";
+					}
+					renderUsageUnavailable(message);
 				});
 		}
 

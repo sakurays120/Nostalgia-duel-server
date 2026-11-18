@@ -51,6 +51,70 @@ describe("UsageDashboardPageBehavior", () => {
 		expect(html1109).toContain("https://ygocdb.com/card/");
 	});
 
+	it("does not query usage data when no published period is available", async () => {
+		const script = renderUsageDashboardPage("goat").match(/<script>([\s\S]*?)<\/script>/)?.[1];
+		expect(script).toBeDefined();
+
+		const domHandlers = new Map<string, () => void>();
+		const elements = new Map<string, any>();
+		const makeElement = () => ({
+			innerHTML: "",
+			textContent: "",
+			value: "",
+			style: { display: "" },
+			classList: { add: jest.fn(), remove: jest.fn() },
+			addEventListener: jest.fn(),
+			appendChild: jest.fn(),
+		});
+		const documentMock = {
+			getElementById: jest.fn((id: string) => {
+				if (!elements.has(id)) elements.set(id, makeElement());
+				return elements.get(id);
+			}),
+			querySelectorAll: jest.fn(() => []),
+			createElement: jest.fn(() => makeElement()),
+			addEventListener: jest.fn((event: string, handler: () => void) => {
+				domHandlers.set(event, handler);
+			}),
+		};
+		const fetchMock = jest.fn(async (url: string) => {
+			if (url.includes("/usage/periods")) {
+				return {
+					ok: true,
+					json: async () => ({ format: "goat", periods: [] }),
+				};
+			}
+			return {
+				ok: false,
+				status: 404,
+				json: async () => ({
+					error: "Usage statistics not ready for format goat and period 2026H2",
+				}),
+			};
+		});
+		const windowMock = {
+			location: { search: "", pathname: "/leaderboards/goat/usage" },
+			addEventListener: jest.fn(),
+		};
+		const historyMock = { pushState: jest.fn() };
+
+		new Function("fetch", "document", "window", "history", script!)(
+			fetchMock,
+			documentMock,
+			windowMock,
+			historyMock,
+		);
+
+		domHandlers.get("DOMContentLoaded")?.();
+		await new Promise((resolve) => setImmediate(resolve));
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(elements.get("usage-table-body")?.innerHTML).toContain("暂无可用的半年度统计");
+		expect(elements.get("usage-table-body")?.innerHTML).not.toContain(
+			"Usage statistics not ready",
+		);
+	});
+
 	it("handles controller HTTP status codes correctly", () => {
 		const controller = new UsageDashboardPageController();
 		const res404: Partial<Response> = {
