@@ -1,30 +1,18 @@
-import { createHash } from "node:crypto";
-import { stat, readFile } from "node:fs/promises";
-
 import { Request, Response } from "express";
 
-import { ResolveCardImage } from "@shared/card/application/ResolveCardImage";
+import { GetCardWithImage } from "@shared/card/application/GetCardWithImage";
+import { getCardWithImage } from "../composition/CardImages";
 
 /**
- * Serves card images from a local, format-scoped image pack.
- *
- * Card images are immutable for a given card code: a card never changes its
- * art. They are therefore served with a long-lived, immutable cache so the
- * browser keeps them and never re-fetches on seek/scrub. Cache invalidation is
- * handled by a version segment injected into the URL (CARD_IMAGE_VERSION on
- * the page): bumping the version produces a brand new URL, so browsers refetch
- * only when the operator deliberately changes the version after replacing the
- * image pack. An ETag derived from file mtime+size backs this up for normal
- * (non-immutable) revalidation and conditional requests.
+ * Returns one card's image (as a base64 data URL) and its full CDB metadata
+ * in a single JSON response. The response is immutable and version-addressed
+ * via ?v= on the URL, so browsers cache it and never re-fetch on seek/scrub.
  */
 export class GetCardImageController {
-	/** One year, immutable: the URL carries the pack version for busting. */
-	private static readonly CACHE_CONTROL = "public, max-age=31536000, immutable";
+	private readonly useCase: GetCardWithImage;
 
-	private readonly resolver: ResolveCardImage;
-
-	constructor(resolver?: ResolveCardImage) {
-		this.resolver = resolver ?? new ResolveCardImage(process.env.CARD_IMAGE_DIR ?? "");
+	constructor(useCase?: GetCardWithImage) {
+		this.useCase = useCase ?? getCardWithImage;
 	}
 
 	async run(req: Request, res: Response): Promise<void> {
@@ -33,32 +21,33 @@ export class GetCardImageController {
 		const codeParam = req.params.code;
 		const code = Array.isArray(codeParam) ? codeParam[0] : (codeParam ?? "");
 
-		const location = this.resolver.run(format, code);
-		if (!location) {
+		if (!/^[0-9A-Za-z_-]+$/.test(format) || !/^\d{1,9}$/.test(code)) {
 			res.status(404).json({ success: false, error: "Card image not found." });
 			return;
 		}
 
-		try {
-			const [bytes, info] = await Promise.all([
-				readFile(location.filePath),
-				stat(location.filePath),
-			]);
-			const version = `${info.mtimeMs}-${info.size}`;
-			const etag = `"${createHash("sha1").update(version).digest("hex")}"`;
-
-			res.setHeader("Cache-Control", GetCardImageController.CACHE_CONTROL);
-			res.setHeader("ETag", etag);
-			const ifNoneMatch = req.headers?.["if-none-match"];
-			if (ifNoneMatch === etag) {
-				res.status(304).end();
-				return;
-			}
-
-			res.setHeader("Content-Type", location.contentType);
-			res.status(200).send(bytes);
-		} catch {
+		const result = await this.useCase.run(format, code);
+		// No image and no metadata: nothing to serve.
+		if (result.image === null && result.card === null) {
 			res.status(404).json({ success: false, error: "Card image not found." });
+			return;
 		}
+
+		res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+		res.setHeader("ETag", result.etag);
+		if (req.headers?.["if-none-match"] === result.etag) {
+			res.status(304).end();
+			return;
+		}
+
+		res.status(200).json({
+			success: true,
+			data: {
+				format: result.format,
+				code: result.code,
+				image: result.image,
+				card: result.card,
+			},
+		});
 	}
 }

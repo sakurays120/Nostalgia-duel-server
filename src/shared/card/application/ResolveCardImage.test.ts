@@ -21,6 +21,15 @@ describe("ResolveCardImage", () => {
 		expect(location?.filePath.replaceAll("\\", "/")).toBe("C:/images/1103/999.png");
 	});
 
+	it("zero-pads short codes to find the image pack file", () => {
+		const service = new ResolveCardImage("C:/images", (p) => p.endsWith("00032864.webp"));
+
+		const location = service.run("goat", "32864");
+
+		expect(location?.contentType).toBe("image/webp");
+		expect(location?.filePath.replaceAll("\\", "/")).toBe("C:/images/goat/00032864.webp");
+	});
+
 	it("returns null when no candidate exists", () => {
 		const service = new ResolveCardImage("C:/images", () => false);
 

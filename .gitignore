@@ -64,6 +64,10 @@ mycard
 # Local bats-core installation (not a repo dependency)
 tools/
 
+# Card packs (compressed runtime images + HTML-free JSON) ship with the app.
+# Raw scraped sources were removed; regenerating needs the original downloads
+# via scripts/compress-card-images.py and scripts/md-to-json.py.
+
 # Local session + fetched core artifact (not versioned)
 .claude/
 /ocgcore-worker

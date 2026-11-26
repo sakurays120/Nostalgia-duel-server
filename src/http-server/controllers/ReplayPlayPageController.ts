@@ -59,33 +59,74 @@ body { background: #090c12; color: #d8dee9; font-family: "Microsoft YaHei", "Pin
 /* ---------- 右侧决斗场地 ---------- */
 .board { flex: 1; min-width: 0; position: relative; overflow: auto; background: radial-gradient(ellipse at 50% 35%, #1b2540 0%, #131a2b 45%, #0b1019 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 18px; gap: 0; }
 .board.zoomed .card, .board.zoomed .slot, .board.zoomed .pile { transform: scale(1.18); }
-.half { width: 100%; max-width: 720px; }
-.edge-row { display: grid; grid-template-columns: 68px 1fr 68px; align-items: end; gap: 8px; margin: 5px 0; }
-.edge-row.empty-edge { grid-template-columns: 68px 1fr 68px; }
-.hand-row { display: flex; gap: 4px; justify-content: center; flex-wrap: nowrap; min-height: 84px; align-items: flex-end; }
-.pile { position: relative; width: 62px; height: 84px; justify-self: center; }
+.half { width: 100%; max-width: 760px; }
+.edge-row { display: grid; grid-template-columns: 95px 1fr 95px; align-items: end; gap: 8px; margin: 5px 0; }
+.edge-row.empty-edge { grid-template-columns: 95px 1fr 95px; }
+.hand-row { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; min-height: 112px; align-items: flex-end; }
+.pile { position: relative; width: 95px; height: 110px; justify-self: center; }
 .card-back { width: 100%; height: 100%; border-radius: 5px; border: 1px solid #6b3b2a; background: repeating-linear-gradient(45deg, #5a1e14, #5a1e14 5px, #7a2a1c 5px, #7a2a1c 10px); box-shadow: inset 0 0 0 3px #41150e, inset 0 0 0 4px #8a4a34; }
 .pile-badge { position: absolute; top: -7px; left: -7px; min-width: 22px; height: 22px; padding: 0 4px; background: #0d1626; border: 1px solid #4a6fa5; border-radius: 4px; color: #cfe0f7; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.zone-row { display: grid; grid-template-columns: 34px repeat(5, 1fr) 34px; gap: 6px; align-items: center; margin: 4px 0; }
+.zone-row { display: grid; grid-template-columns: 34px repeat(5, 95px) 34px; gap: 6px; align-items: center; justify-content: center; margin: 4px 0; }
 .zone-row.spell { margin-bottom: 6px; }
-.zone-badge { height: 78px; border: 1px solid #2a3444; background: #0e1420; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #8a97ad; font-size: 12px; font-weight: 700; }
-.slot { position: relative; width: 100%; aspect-ratio: 62 / 84; border: 1px solid #232d3d; background: rgba(18,26,40,.75); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.zone-badge { height: 110px; border: 1px solid #2a3444; background: #0e1420; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #8a97ad; font-size: 12px; font-weight: 700; }
+.slot { position: relative; width: 95px; height: 110px; border: 1px solid #232d3d; background: rgba(18,26,40,.75); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
 .slot .num { position: absolute; top: 2px; left: 4px; color: #5f6c82; font-size: 10px; z-index: 2; text-shadow: 0 1px 2px #000; }
 .mono .slot .num { left: auto; right: 4px; }
-.card { position: relative; width: 100%; height: 100%; border-radius: 4px; overflow: hidden; border: 1px solid #3a4a60; background: #101826; }
-.card .card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.card .card-name-fallback { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; text-align: center; padding: 2px; font-size: 9px; line-height: 1.2; color: #dfe6f2; word-break: break-all; background: #182236; }
-.card.facedown .card-back { width: 100%; height: 100%; }
+.hand-row .card { width: 95px; height: 110px; flex-shrink: 0; }
+.card { position: relative; width: 95px; height: 110px; border-radius: 5px; overflow: hidden; border: 1px solid #3a4a60; background: #141b29; display: flex; flex-direction: column; align-items: center; }
+.card .card-img { width: 90px; height: 90px; object-fit: cover; display: block; flex-shrink: 0; margin-top: 1px; border-radius: 3px; }
+.card .card-name-fallback { display: none; position: absolute; top: 1px; left: 50%; transform: translateX(-50%); width: 90px; height: 90px; align-items: center; justify-content: center; text-align: center; padding: 3px; font-size: 10px; line-height: 1.2; color: #eef2f8; word-break: break-all; background: #1c2638; border-radius: 3px; }
+.card .card-name-label { width: 100%; height: 18px; min-height: 18px; display: flex; align-items: center; justify-content: center; padding: 0 3px; font-size: 10px; line-height: 1; color: #e6ecf5; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(8,12,20,.55); }
+.card.facedown .card-back { width: 90px; height: 90px; margin-top: 1px; flex-shrink: 0; }
 .card.facedown.translucent { opacity: .5; }
 .card.atk-pos { border-color: #5fa85f; }
 .card.def-pos { border-color: #5f7fb0; }
-.card .stat { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(6,12,22,.88); color: #d8ffe0; font-size: 10px; font-weight: 700; text-align: center; z-index: 3; }
+.card .stat { position: absolute; bottom: 18px; left: 1px; right: 1px; background: rgba(6,12,22,.88); color: #d8ffe0; font-size: 10px; font-weight: 700; text-align: center; z-index: 3; }
 .card.hl { box-shadow: 0 0 0 2px #d14b88, 0 0 12px rgba(209,75,136,.7); }
+/* 卡牌类型配色：通常怪兽 / 效果怪兽 / 仪式怪兽 / 融合怪兽 / 魔法 / 陷阱 */
+.card.ct-normal  { background: #2a2415; border-color: #a98b3f; }
+.card.ct-normal  .card-name-label { background: rgba(120,96,36,.55); }
+.card.ct-effect  { background: #301a10; border-color: #cf6a2c; }
+.card.ct-effect  .card-name-label { background: rgba(150,70,28,.6); }
+.card.ct-ritual  { background: #161f36; border-color: #6f8ee0; }
+.card.ct-ritual  .card-name-label { background: rgba(70,100,190,.6); }
+.card.ct-fusion  { background: #281836; border-color: #a878d8; }
+.card.ct-fusion  .card-name-label { background: rgba(140,86,190,.6); }
+.card.ct-spell   { background: #12291b; border-color: #3fa562; }
+.card.ct-spell   .card-name-label { background: rgba(46,140,80,.6); }
+.card.ct-trap    { background: #301527; border-color: #cf5a9e; }
+.card.ct-trap    .card-name-label { background: rgba(170,64,132,.6); }
 .field-divider { height: 1px; background: linear-gradient(90deg, transparent, #2a3444, transparent); margin: 8px 0; }
 .win-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(12,18,30,.94); border: 2px solid #d14b88; border-radius: 8px; padding: 18px 32px; font-size: 20px; font-weight: 700; color: #ffd0e4; display: none; z-index: 10; text-align: center; }
 .loading, .errbox { color: #8b93a7; font-size: 14px; text-align: center; }
 .errbox { color: #ff7b72; }
 select { font-family: inherit; }
+
+/* ---------- 卡牌详情弹窗 ---------- */
+.card-modal { position: fixed; inset: 0; background: rgba(3,6,12,.82); z-index: 100; display: none; align-items: center; justify-content: center; padding: 24px; }
+.card-modal.open { display: flex; }
+.cm-panel { position: relative; width: min(760px, 96vw); max-height: 92vh; overflow-y: auto; background: #121824; border: 1px solid #33415a; border-radius: 8px; box-shadow: 0 18px 60px rgba(0,0,0,.65); padding: 18px 20px 22px; }
+.cm-close { position: absolute; top: 10px; right: 12px; background: #1c2534; color: #b9c3d4; border: 1px solid #2a3444; border-radius: 4px; font-size: 18px; line-height: 1; width: 28px; height: 28px; cursor: pointer; }
+.cm-close:hover { background: #2a3547; color: #fff; }
+.cm-head { display: flex; gap: 18px; }
+.cm-img { width: 200px; height: 280px; flex-shrink: 0; object-fit: contain; background: #0c121d; border: 1px solid #2a3444; border-radius: 6px; }
+.cm-img-ph { width: 200px; height: 280px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #0c121d; border: 1px solid #2a3444; border-radius: 6px; color: #5a6578; font-size: 12px; text-align: center; padding: 8px; }
+.cm-info { min-width: 0; flex: 1; }
+.cm-name { font-size: 20px; font-weight: 700; color: #f0f4fb; margin-bottom: 2px; }
+.cm-alt { font-size: 11px; color: #8a97ad; line-height: 1.5; margin-bottom: 10px; word-break: break-word; }
+.cm-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.cm-tag { background: #1c2740; border: 1px solid #2f4066; border-radius: 3px; padding: 2px 7px; color: #bcd0ef; font-size: 11px; }
+.cm-tag.stat { background: #1b3326; border-color: #2f5a40; color: #a8e6c0; }
+.cm-grid { display: grid; grid-template-columns: 68px 1fr; gap: 4px 8px; font-size: 12px; line-height: 1.45; }
+.cm-grid .k { color: #7f8a9e; }
+.cm-grid .v { color: #d5deec; word-break: break-word; }
+.cm-sec { margin-top: 16px; border-top: 1px solid #263044; padding-top: 10px; }
+.cm-sec h4 { font-size: 12px; color: #9fb0cc; margin-bottom: 5px; font-weight: 600; }
+.cm-sec .txt { font-size: 12px; color: #c2ccdc; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.cm-loading { color: #8b93a7; padding: 24px; text-align: center; }
+.card, .logitem .thumb { cursor: pointer; }
+.card:hover { border-color: #d14b88; }
+.logitem .thumb:hover { border-color: #d14b88; }
 </style>
 </head>
 <body>
@@ -153,6 +194,12 @@ select { font-family: inherit; }
     <div class="win-banner" id="winbanner"></div>
   </main>
 </div>
+<div class="card-modal" id="card-modal">
+  <div class="cm-panel" id="cm-panel">
+    <button class="cm-close" id="cm-close" title="关闭">×</button>
+    <div id="cm-content"><div class="cm-loading">正在加载卡牌信息…</div></div>
+  </div>
+</div>
 <script>
 var FORMAT = "__FORMAT__";
 var REPLAY_ID = "__REPLAY_ID__";
@@ -215,6 +262,7 @@ function freshState() {
   return { players: players, turn: 0, turnPlayer: 0, phase: 0, winner: null, winType: null, recent: "" };
 }
 function cname(code) { if (!code) return "?"; return cardNames[String(code)] || ("#" + code); }
+function padCode8(code) { var s = String(code || ""); return /^\d{1,8}$/.test(s) ? s.padStart(8, "0") : s; }
 function isFacedown(pos) { return pos === 2 || pos === 8 || pos === 10; }
 function posText(pos) { if (pos === 1) return "表侧攻击"; if (pos === 4) return "表侧守备"; if (pos === 2) return "里侧攻击"; if (pos === 8) return "里侧守备"; return ""; }
 
@@ -432,9 +480,126 @@ function imgFallback(img) {
   if (sibling) sibling.style.display = "flex";
 }
 function thumbFallback(img) { img.style.display = "none"; }
-function imgSrc(code) {
+function cardUrl(code) {
   return "/api/cards/" + encodeURIComponent(FORMAT) + "/" + encodeURIComponent(code || 0) + "/image?v=" + encodeURIComponent(CARD_IMG_VERSION);
 }
+
+/* One in-flight/cache entry per card code. The HTTP response is immutable and
+   long-cached too, so this map mainly avoids re-parsing JSON during seek. */
+var cardCache = {};
+function loadCard(code) {
+  var key = String(code || 0);
+  if (!cardCache[key]) {
+    cardCache[key] = fetch(cardUrl(key))
+      .then(function (res) { return res.status === 404 ? null : res.json().then(function (b) { return b && b.success ? b.data : null; }); })
+      .catch(function () { return null; });
+  }
+  return cardCache[key];
+}
+/* Map a card's type text to one of the six frame colours. */
+function cardTypeClass(typeText) {
+  var t = String(typeText || "");
+  if (t.indexOf("魔法") >= 0) return "ct-spell";
+  if (t.indexOf("陷阱") >= 0) return "ct-trap";
+  if (t.indexOf("怪兽") >= 0) {
+    if (t.indexOf("仪式") >= 0) return "ct-ritual";
+    if (t.indexOf("融合") >= 0) return "ct-fusion";
+    if (t.indexOf("效果") >= 0 || t.indexOf("同调") >= 0 || t.indexOf("超量") >= 0 || t.indexOf("连接") >= 0) return "ct-effect";
+    return "ct-normal";
+  }
+  return "";
+}
+/* Fill every placeholder img from the cache once its card data resolves. */
+function hydrateCardImages() {
+  var nodes = document.querySelectorAll("img[data-card-code]");
+  for (var i = 0; i < nodes.length; i++) {
+    (function (img) {
+      var code = img.getAttribute("data-card-code");
+      var kind = img.getAttribute("data-card-kind");
+      img.setAttribute("data-hydrated", code);
+      loadCard(code).then(function (info) {
+        if (!img.isConnected) return;
+        if (info && info.card && kind === "card") {
+          var card = info.card;
+          var wrapper = img.parentElement;
+          var tc = cardTypeClass(card.typeText);
+          if (wrapper && tc) { wrapper.classList.add(tc); }
+          // Prefer the authoritative card name for the visible label.
+          var label = wrapper && wrapper.querySelector(".card-name-label");
+          if (label && card.name) label.textContent = card.name;
+        }
+        if (info && info.image) {
+          img.src = info.image;
+        } else if (kind === "thumb") {
+          thumbFallback(img);
+        } else {
+          imgFallback(img);
+        }
+      });
+    })(nodes[i]);
+  }
+}
+/* ---------- 卡牌详情弹窗 ---------- */
+function escapeAttr(s) { return escapeHtml(s); }
+function renderCardDetail(code, info) {
+  var card = (info && info.card) || {};
+  var name = card.name || cname(code);
+  var image = info && info.image;
+  var imgHtml = image
+    ? '<img class="cm-img" src="' + image + '" alt="' + escapeAttr(name) + '">'
+    : '<div class="cm-img-ph">' + escapeHtml(name) + '<br>（暂无卡图）</div>';
+  var tags = "";
+  if (card.typeText) tags += '<span class="cm-tag">' + escapeHtml(card.typeText) + '</span>';
+  if (card.level) tags += '<span class="cm-tag">★ ' + card.level + '</span>';
+  if (card.attributeText) tags += '<span class="cm-tag">' + escapeHtml(card.attributeText) + '</span>';
+  if (card.raceText) tags += '<span class="cm-tag">' + escapeHtml(card.raceText) + '</span>';
+  if (card.attack !== undefined) tags += '<span class="cm-tag stat">ATK ' + card.attack + ' / DEF ' + (card.defense !== undefined ? card.defense : "?") + '</span>';
+  var alt = [card.nameJa, card.nameEn].filter(Boolean).map(escapeHtml).join(" · ");
+  var rows = [
+    ["卡片密码", padCode8(card.code || code)],
+    ["使用限制", card.limitation],
+    ["罕见度", card.rarity],
+    ["卡包", card.packs],
+  ].filter(function (r) { return !!r[1]; })
+    .map(function (r) { return '<div class="k">' + r[0] + '</div><div class="v">' + escapeHtml(r[1]) + '</div>'; }).join("");
+  var sections = "";
+  function addSection(title, value) {
+    if (!value) return;
+    sections += '<div class="cm-sec"><h4>' + title + '</h4><div class="txt">' + escapeHtml(value) + '</div></div>';
+  }
+  addSection("效果", card.desc);
+  addSection("FAQ / 调整", [card.faq, card.ruling, card.qas].filter(Boolean).join("\\n\\n"));
+  addSection("介绍", card.intro);
+  if (card.errata) addSection("卡片勘误", card.errata);
+  document.getElementById("cm-content").innerHTML =
+    '<div class="cm-head">' + imgHtml +
+    '<div class="cm-info">' +
+      '<div class="cm-name">' + escapeHtml(name) + '</div>' +
+      (alt ? '<div class="cm-alt">' + alt + '</div>' : "") +
+      (tags ? '<div class="cm-tags">' + tags + '</div>' : "") +
+      (rows ? '<div class="cm-grid">' + rows + '</div>' : "") +
+    '</div></div>' + sections;
+}
+function openCardDetail(code) {
+  code = Number(code) || 0;
+  if (!code) return;
+  var modal = document.getElementById("card-modal");
+  modal.classList.add("open");
+  document.getElementById("cm-content").innerHTML = '<div class="cm-loading">正在加载卡牌信息…</div>';
+  loadCard(code).then(function (info) {
+    if (!modal.classList.contains("open")) return;
+    renderCardDetail(code, info);
+  });
+}
+function closeCardDetail() { document.getElementById("card-modal").classList.remove("open"); }
+document.getElementById("cm-close").onclick = closeCardDetail;
+document.getElementById("card-modal").onclick = function (e) { if (e.target === this) closeCardDetail(); };
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeCardDetail(); });
+/* Click a field card, hand card or log thumbnail to view its details. */
+document.getElementById("board").addEventListener("click", function (e) {
+  var target = e.target.closest ? e.target.closest("[data-card-code]") : null;
+  if (target && target.getAttribute("data-card-kind") === "card") { openCardDetail(target.getAttribute("data-card-code")); }
+});
 function cardHtml(card, hideName) {
   if (!card) return "";
   var cls = "card";
@@ -448,9 +613,10 @@ function cardHtml(card, hideName) {
   else if (card.position === 4) cls += " def-pos";
   var code = card.code || 0;
   var stat = (card.attack !== undefined) ? '<div class="stat">' + card.attack + "/" + (card.defense !== undefined ? card.defense : "?") + "</div>" : "";
-  return '<div class="' + cls + '">' +
-    '<img class="card-img" src="' + imgSrc(code) + '" alt="" loading="lazy" onerror="imgFallback(this)">' +
-    '<div class="card-name-fallback">' + escapeHtml(cname(code)) + '</div>' + stat + '</div>';
+  return '<div class="' + cls + '" data-card-code="' + code + '" data-card-kind="card">' +
+    '<img class="card-img" data-card-code="' + code + '" data-card-kind="card" alt="" onerror="imgFallback(this)">' +
+    '<div class="card-name-fallback">' + escapeHtml(cname(code)) + '</div>' + stat +
+    '<div class="card-name-label">' + escapeHtml(cname(code)) + '</div></div>';
 }
 function renderZone(player, loc, seqOrder, badgeValue, badgeAtStart) {
   var p = state.players[player];
@@ -552,6 +718,7 @@ function render() {
   for (var k = 0; k < items.length; k++) { items[k].className = "logitem" + (k === currentLogIndex() ? " current" : ""); }
   var cur = currentLogIndex();
   if (cur >= 0 && items[cur]) { items[cur].scrollIntoView({ block: "nearest" }); }
+  hydrateCardImages();
 }
 function activeTurnIndex() {
   var idx = -1;
@@ -585,9 +752,15 @@ function precompute() {
         var entry = logEntries[k];
         var div = document.createElement("div");
         div.className = "logitem";
-        var thumb = entry.code ? '<img class="thumb" src="' + imgSrc(entry.code) + '" alt="" loading="lazy" onerror="thumbFallback(this)">' : '<span class="thumb-ph"></span>';
+        var thumb = entry.code ? '<img class="thumb" data-card-code="' + entry.code + '" data-card-kind="thumb" alt="" onerror="thumbFallback(this)">' : '<span class="thumb-ph"></span>';
         div.innerHTML = thumb + '<span class="txt"><span class="idx">' + (li + 1) + '</span>' + escapeHtml(entry.text) + '</span>';
-        (function (stepIdx) { div.onclick = function () { pause(); seekTo(stepIdx); }; })(i);
+        (function (stepIdx) {
+          div.onclick = function (e) {
+            var thumb = e.target && e.target.closest ? e.target.closest("img.thumb[data-card-code]") : null;
+            if (thumb) { openCardDetail(thumb.getAttribute("data-card-code")); return; }
+            pause(); seekTo(stepIdx);
+          };
+        })(i);
         loglist.appendChild(div);
         li++;
       }
@@ -600,6 +773,7 @@ function precompute() {
     loglist.appendChild(empty);
   }
   state = realState;
+  hydrateCardImages();
 }
 function beep() {
   if (!soundOn) return;

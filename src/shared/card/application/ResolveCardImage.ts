@@ -28,10 +28,16 @@ export class ResolveCardImage {
 		if (!/^[0-9A-Za-z_-]+$/.test(format) || !/^\d{1,9}$/.test(code)) {
 			return null;
 		}
-		for (const candidate of CANDIDATES) {
-			const filePath = path.join(this.rootDir, format, `${code}${candidate.extension}`);
-			if (this.fileExists(filePath)) {
-				return { filePath, contentType: candidate.contentType };
+		// The image pack filenames are zero-padded to 8 digits (00032864.webp)
+		// while replay data carries the numeric code (32864). Try the exact code
+		// first for backward compatibility, then the padded form.
+		const codes = code.length < 8 ? [code, code.padStart(8, "0")] : [code];
+		for (const candidateCode of codes) {
+			for (const candidate of CANDIDATES) {
+				const filePath = path.join(this.rootDir, format, `${candidateCode}${candidate.extension}`);
+				if (this.fileExists(filePath)) {
+					return { filePath, contentType: candidate.contentType };
+				}
 			}
 		}
 		return null;
