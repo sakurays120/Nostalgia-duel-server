@@ -15,7 +15,7 @@ export interface DeckTypeMetadata {
 }
 
 export const CLASSIFIER_VERSIONS: Record<string, string> = {
-	goat: "goat-ydk-v2",
+	goat: "goat-ydk-v3",
 	"1109": "1109-c9ba01c-v2",
 	"1103": "1103-fallback-v1",
 };
@@ -391,7 +391,8 @@ type CardAliases = NonNullable<Parameters<typeof normalizeCardCounts>[1]>;
 // Stable sorting preserves catalog order for templates with the same size.
 const GOAT_TEMPLATE_SECTIONS = GOAT_DECK_TEMPLATES.map((template) => {
 	const sections = [template.mainCards, template.extraCards ?? [], template.sideCards ?? []];
-	return { template, sections, size: sections.reduce((sum, cards) => sum + cards.length, 0) };
+	const size = sections.reduce((sum, cards) => sum + cards.length, 0);
+	return { template, sections, size: size + (template.mainCardGroup?.minCopies ?? 0) };
 }).sort((a, b) => a.size - b.size);
 
 export function classifyDeck(
@@ -413,21 +414,37 @@ export function classifyDeck(
 		const counts = [mainCards, sections?.extraCards ?? [], sections?.sideCards ?? []].map((cards) =>
 			normalizeCardCounts(cards, aliases),
 		);
-		const match = GOAT_TEMPLATE_SECTIONS.find(({ sections: required }) =>
-			required.every((cards, index) =>
+		for (const { template, sections: required } of GOAT_TEMPLATE_SECTIONS) {
+			const requiredCardsMatch = required.every((cards, index) =>
 				[...normalizeCardCounts(cards, aliases)].every(
 					([id, copies]) => (counts[index].get(id) ?? 0) >= copies,
 				),
-			),
-		);
-		if (!match) return fallback;
-		return {
-			formatId,
-			deckTypeCode: match.template.code,
-			deckTypeNameZh: match.template.nameZh,
-			classifierVersion: version,
-			evidence: [...normalizeCardCounts(match.sections.flat(), aliases).keys()],
-		};
+			);
+			if (!requiredCardsMatch) continue;
+
+			const excluded = normalizeCardCounts(template.excludedCards ?? [], aliases);
+			if ([...excluded.keys()].some((id) => counts.some((section) => section.has(id)))) {
+				continue;
+			}
+
+			const group = template.mainCardGroup;
+			const groupEvidence = [...normalizeCardCounts(group?.cards ?? [], aliases).keys()].filter(
+				(id) => counts[0].has(id),
+			);
+			const groupCopies = groupEvidence.reduce((sum, id) => sum + (counts[0].get(id) ?? 0), 0);
+			if (group && groupCopies < group.minCopies) continue;
+
+			return {
+				formatId,
+				deckTypeCode: template.code,
+				deckTypeNameZh: template.nameZh,
+				classifierVersion: version,
+				evidence: [
+					...new Set([...normalizeCardCounts(required.flat(), aliases).keys(), ...groupEvidence]),
+				],
+			};
+		}
+		return fallback;
 	}
 	if (formatId !== "1109") return fallback;
 

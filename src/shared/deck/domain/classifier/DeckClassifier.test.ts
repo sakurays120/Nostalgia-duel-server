@@ -252,7 +252,55 @@ describe("GOAT YDK templates", () => {
 		expect(classifyDeck("goat", mainCards.slice(1)).deckTypeCode).toBe("OTHERS");
 	});
 
-	it.each(GOAT_DECK_TEMPLATES)("classifies template $nameZh", (template) => {
+	const goatControl = [34853266, 26202165, 8131171, 46411259, 46411259, 73915051, 73915051];
+
+	it("classifies Goat Control with the new minimum copies", () => {
+		expect(classifyDeck("goat", goatControl).deckTypeCode).toBe("G13");
+		expect(classifyDeck("goat", goatControl.slice(0, -1)).deckTypeCode).toBe("OTHERS");
+		expect(
+			classifyDeck(
+				"goat",
+				goatControl.filter((_, index) => index !== 3),
+			).deckTypeCode,
+		).toBe("OTHERS");
+	});
+
+	it("excludes Goat Control when the forbidden card appears in any section", () => {
+		expect(classifyDeck("goat", [...goatControl, 31786629]).deckTypeCode).toBe("OTHERS");
+		expect(
+			classifyDeck("goat", goatControl, undefined, { extraCards: [31786629] }).deckTypeCode,
+		).toBe("OTHERS");
+		expect(
+			classifyDeck("goat", goatControl, undefined, { sideCards: [31786629] }).deckTypeCode,
+		).toBe("OTHERS");
+	});
+
+	it.each(
+		[
+			[4929256, 4929256, 4929256],
+			[26205777, 60229110, 51945556],
+			[4929256, 26205777, 60229110, 51945556],
+		].map((mainCards) => ({ mainCards })),
+	)("classifies Monarch Beat with $mainCards", ({ mainCards }) => {
+		expect(classifyDeck("goat", mainCards)).toMatchObject({
+			deckTypeCode: "G38",
+			deckTypeNameZh: "帝王Beat",
+			evidence: [...new Set(mainCards)],
+		});
+	});
+
+	it("requires three Monarch copies in the main deck", () => {
+		expect(
+			classifyDeck("goat", [4929256, 26205777], undefined, {
+				extraCards: [60229110],
+				sideCards: [51945556],
+			}).deckTypeCode,
+		).toBe("OTHERS");
+	});
+
+	it.each(
+		GOAT_DECK_TEMPLATES.filter((template) => !template.mainCardGroup),
+	)("classifies template $nameZh", (template) => {
 		expect(classifyDeck("goat", template.mainCards, undefined, template).deckTypeCode).toBe(
 			template.code,
 		);

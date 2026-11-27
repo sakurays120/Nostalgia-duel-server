@@ -6,6 +6,8 @@ export interface GoatDeckTemplate {
 	mainCards: readonly number[];
 	extraCards?: readonly number[];
 	sideCards?: readonly number[];
+	excludedCards?: readonly number[];
+	mainCardGroup?: { cards: readonly number[]; minCopies: number };
 }
 
 export const GOAT_DECK_TEMPLATES: readonly GoatDeckTemplate[] = [
@@ -87,10 +89,8 @@ export const GOAT_DECK_TEMPLATES: readonly GoatDeckTemplate[] = [
 	{
 		code: "G13",
 		nameZh: "替罪羊控制",
-		mainCards: [
-			34853266, 26202165, 8131171, 31036355, 31036355, 46411259, 46411259, 46411259, 73915051,
-			73915051, 73915051,
-		],
+		mainCards: [34853266, 26202165, 8131171, 46411259, 46411259, 73915051, 73915051],
+		excludedCards: [31786629],
 	},
 	{ code: "G14", nameZh: "小丑控制", mainCards: [13215230, 13215230, 13215230] },
 	{
@@ -183,5 +183,11 @@ export const GOAT_DECK_TEMPLATES: readonly GoatDeckTemplate[] = [
 		code: "G37",
 		nameZh: "蜘蛛Beat",
 		mainCards: [94773007, 94773007, 41420027, 41420027, 41420027],
+	},
+	{
+		code: "G38",
+		nameZh: "帝王Beat",
+		mainCards: [],
+		mainCardGroup: { cards: [4929256, 26205777, 60229110, 51945556], minCopies: 3 },
 	},
 ];
