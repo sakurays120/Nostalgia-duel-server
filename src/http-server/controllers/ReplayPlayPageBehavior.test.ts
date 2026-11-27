@@ -144,6 +144,26 @@ describe("ReplayPlayPageBehavior", () => {
 		expect(html).not.toContain("isTop ? [4, 3, 2, 1, 0]");
 	});
 
+	it("renders the opponent spell/trap row above the monster row", () => {
+		const half1 = html.slice(html.indexOf('id="half-1"'), html.indexOf('id="half-0"'));
+		const szone = half1.indexOf('id="szone-1"');
+		const mzone = half1.indexOf('id="mzone-1"');
+		expect(szone).toBeGreaterThan(-1);
+		expect(mzone).toBeGreaterThan(szone);
+		// lower (own) half keeps monster row above spell/trap row
+		const half0 = html.slice(html.indexOf('id="half-0"'), html.indexOf('id="winbanner"'));
+		expect(half0.indexOf('id="mzone-0"')).toBeLessThan(half0.indexOf('id="szone-0"'));
+	});
+
+	it("shows set cards by name instead of the card-back image", () => {
+		// face-down field cards render a name plate, clickable for detail
+		expect(html).toContain('class="face-name"');
+		expect(html).toContain(".card.facedown .face-name");
+		expect(html).toContain("盖放卡：点击查看详情");
+		// hidden hand cards keep the card back
+		expect(html).toContain('return \'<div class="\' + cls + \'"><div class="card-back"></div></div>\';');
+	});
+
 	it("makes deck, extra, grave and removed zones clickable with a list popup", () => {
 		expect(html).toContain('id="zone-modal"');
 		expect(html).toContain('id="zm-close"');

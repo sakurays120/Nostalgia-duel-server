@@ -90,6 +90,8 @@ body { background: #090c12; color: #d8dee9; font-family: "Microsoft YaHei", "Pin
 .card .card-name-fallback { display: none; position: absolute; top: 1px; left: 50%; transform: translateX(-50%); width: 90px; height: 90px; align-items: center; justify-content: center; text-align: center; padding: 3px; font-size: 10px; line-height: 1.2; color: #eef2f8; word-break: break-all; background: #1c2638; border-radius: 3px; }
 .card .card-name-label { width: 100%; height: 18px; min-height: 18px; display: flex; align-items: center; justify-content: center; padding: 0 3px; font-size: 10px; line-height: 1; color: #e6ecf5; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(8,12,20,.55); }
 .card.facedown .card-back { width: 90px; height: 90px; margin-top: 1px; flex-shrink: 0; }
+.card.facedown .face-name { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4px; box-sizing: border-box; color: #cfd8e6; font-size: 12px; font-weight: 600; line-height: 1.3; background: rgba(14,20,32,.9); border: 1px dashed #3a4a63; border-radius: 4px; overflow: hidden; }
+.card.facedown .face-name::before { content: "盖 "; margin-right: 2px; color: #7fa4d9; }
 .card.facedown.translucent { opacity: .5; }
 .card.atk-pos { border-color: #5fa85f; }
 .card.def-pos { border-color: #5f7fb0; }
@@ -198,6 +200,7 @@ select { font-family: inherit; }
 .board.compact .hand-row { min-height: var(--ch); gap: 2px; }
 .board.compact .card, .board.compact .hand-row .card { width: var(--cw); height: var(--ch); }
 .board.compact .card .card-img, .board.compact .card .card-name-fallback, .board.compact .card.facedown .card-back { width: var(--iw); height: var(--iw); }
+.board.compact .card.facedown .face-name { font-size: 10px; padding: 2px; }
 .board.compact .card .card-name-fallback { top: 1px; font-size: 7px; }
 .board.compact .card .card-name-label { height: 12px; min-height: 12px; font-size: 8px; padding: 0 1px; }
 .board.compact .card .stat { bottom: 12px; font-size: 8px; }
@@ -274,8 +277,8 @@ select { font-family: inherit; }
         <div class="hand-row" id="hand-1"></div>
         <div class="pile clickable" id="extra-1" data-zone="extra" data-player="1"><div class="card-back"></div><span class="pile-badge">0</span><span class="zone-label" id="extra-1-label">额外区(0)</span></div>
       </div>
-      <div class="zone-row" id="mzone-1"></div>
       <div class="zone-row spell" id="szone-1"></div>
+      <div class="zone-row" id="mzone-1"></div>
     </div>
     <div class="field-divider" id="divider" style="display:none"></div>
     <div class="field-row" id="field-row" style="display:none">
@@ -820,15 +823,22 @@ document.getElementById("board").addEventListener("click", function (e) {
 function cardHtml(card, hideName) {
   if (!card) return "";
   var cls = "card";
-  var facedown = isFacedown(card.position) || hideName;
-  if (facedown) {
+  if (hideName) {
+    // Unknown info (hidden hand): keep the card back.
     cls += " facedown";
     if (facedownTranslucent) cls += " translucent";
     return '<div class="' + cls + '"><div class="card-back"></div></div>';
   }
+  var code = card.code || 0;
+  if (isFacedown(card.position)) {
+    // Set (face-down) field card: show its name instead of the back image.
+    cls += " facedown";
+    if (facedownTranslucent) cls += " translucent";
+    return '<div class="' + cls + '" data-card-code="' + code + '" data-card-kind="card" title="盖放卡：点击查看详情">' +
+      '<div class="face-name">' + escapeHtml(cname(code)) + '</div></div>';
+  }
   if (card.position === 1) cls += " atk-pos";
   else if (card.position === 4) cls += " def-pos";
-  var code = card.code || 0;
   var stat = (card.attack !== undefined) ? '<div class="stat">' + card.attack + "/" + (card.defense !== undefined ? card.defense : "?") + "</div>" : "";
   return '<div class="' + cls + '" data-card-code="' + code + '" data-card-kind="card">' +
     '<img class="card-img" data-card-code="' + code + '" data-card-kind="card" alt="" onerror="imgFallback(this)">' +
