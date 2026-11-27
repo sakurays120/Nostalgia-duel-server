@@ -69,7 +69,19 @@ body { background: #090c12; color: #d8dee9; font-family: "Microsoft YaHei", "Pin
 .zone-row { display: grid; grid-template-columns: 34px repeat(5, 95px) 34px; gap: 6px; align-items: center; justify-content: center; margin: 4px 0; }
 .zone-row.spell { margin-bottom: 6px; }
 .zone-badge { height: 110px; border: 1px solid #2a3444; background: #0e1420; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #8a97ad; font-size: 12px; font-weight: 700; }
+/* 区域文字标签（卡组/额外区/墓地/除外区） */
+.zone-label { color: #e5484d; font-size: 11px; font-weight: 600; white-space: nowrap; pointer-events: none; }
+.zone-label.side { position: absolute; top: 50%; transform: translateY(-50%); }
+.zone-label.left { left: -4px; transform: translate(-100%, -50%); }
+.zone-label.right { right: -4px; transform: translate(100%, -50%); }
+.pile .zone-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; line-height: 1.3; }
 .slot { position: relative; width: 95px; height: 110px; border: 1px solid #232d3d; background: rgba(18,26,40,.75); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+/* 中场两个场地卡位 */
+.field-row { display: flex; gap: 10px; justify-content: center; align-items: center; margin: 2px 0; }
+.field-slot { position: relative; width: 60px; height: 84px; border: 1px solid #3a4a60; border-radius: 4px; background: rgba(18,26,40,.75); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.field-slot .card { width: 100%; height: 100%; }
+.field-slot .field-name { color: #e5484d; font-size: 11px; font-weight: 600; text-align: center; line-height: 1.3; }
+.field-slot:hover { border-color: #d14b88; }
 .slot .num { position: absolute; top: 2px; left: 4px; color: #5f6c82; font-size: 10px; z-index: 2; text-shadow: 0 1px 2px #000; }
 .mono .slot .num { left: auto; right: 4px; }
 .hand-row .card { width: 95px; height: 110px; flex-shrink: 0; }
@@ -124,9 +136,93 @@ select { font-family: inherit; }
 .cm-sec h4 { font-size: 12px; color: #9fb0cc; margin-bottom: 5px; font-weight: 600; }
 .cm-sec .txt { font-size: 12px; color: #c2ccdc; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 .cm-loading { color: #8b93a7; padding: 24px; text-align: center; }
+/* 区域卡牌列表弹窗 */
+.zone-modal { position: fixed; inset: 0; background: rgba(3,6,12,.82); z-index: 100; display: none; align-items: center; justify-content: center; padding: 24px; }
+.zone-modal.open { display: flex; }
+.zm-panel { position: relative; width: min(720px, 94vw); max-height: 88vh; overflow-y: auto; background: #121824; border: 1px solid #33415a; border-radius: 8px; box-shadow: 0 18px 60px rgba(0,0,0,.65); padding: 16px 18px 20px; }
+.zm-title { font-size: 16px; font-weight: 700; color: #f0f4fb; padding-right: 34px; margin-bottom: 3px; }
+.zm-sub { font-size: 11px; color: #8a97ad; margin-bottom: 12px; }
+.zm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.zm-item { display: flex; flex-direction: column; align-items: center; gap: 3px; background: #171f2e; border: 1px solid #2a3444; border-radius: 5px; padding: 6px 4px; cursor: pointer; }
+.zm-item:hover { border-color: #d14b88; }
+.zm-item img { width: 64px; height: 64px; object-fit: cover; border-radius: 3px; background: #0c121d; }
+.zm-item .ph { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; color: #5a6578; font-size: 10px; background: #0c121d; border-radius: 3px; text-align: center; }
+.zm-item .nm { font-size: 10px; color: #d5deec; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.zm-item .cnt { font-size: 9px; color: #8a97ad; }
+.zm-empty { color: #7f8a9e; font-size: 12px; padding: 18px; text-align: center; }
+.zone-badge.clickable { cursor: pointer; }
+.zone-badge.clickable:hover, .pile.clickable:hover { border-color: #d14b88; }
+.pile.clickable { cursor: pointer; }
 .card, .logitem .thumb { cursor: pointer; }
 .card:hover { border-color: #d14b88; }
 .logitem .thumb:hover { border-color: #d14b88; }
+
+/* ---------- 移动端：竖屏提示旋转，横屏紧凑布局 ---------- */
+.rotate-hint { display: none; position: fixed; inset: 0; z-index: 300; background: #090c12; color: #d8dee9; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px; }
+.rotate-hint .rot-icon { font-size: 40px; line-height: 1; color: #d14b88; }
+.rotate-hint .rot-title { font-size: 16px; font-weight: 700; }
+.rotate-hint .rot-sub { font-size: 11px; color: #7f8a9e; line-height: 1.6; }
+@media (orientation: portrait) and (max-width: 820px) {
+  .rotate-hint { display: flex; }
+}
+/* 横屏且高度有限时，把整块场地按比例缩小以适配屏幕 */
+.board.compact { --cw: 54px; --ch: 64px; --iw: 50px; padding: 4px 8px; }
+.app.compact .sidebar { width: 128px; }
+.app.compact .player-infos { padding: 3px 4px 1px; gap: 2px; }
+.app.compact .pinfo { padding: 3px 4px; }
+.app.compact .pinfo .nm { font-size: 10px; }
+.app.compact .pinfo .lp { font-size: 13px; }
+.app.compact .pinfo .hc { font-size: 9px; }
+.app.compact .duel-meta { padding: 2px 5px 3px; font-size: 9px; line-height: 1.3; }
+.app.compact .phasebar { padding: 0 3px 3px; gap: 1px; }
+.app.compact .phase { font-size: 8px; padding: 2px 0; }
+.app.compact .ctrl-grid { gap: 2px; padding: 0 3px 3px; }
+.app.compact .ctrl-grid button, .app.compact .ctrl-grid select { font-size: 9px; padding: 3px 1px; }
+.app.compact .jump-row input { width: 34px; font-size: 10px; padding: 3px; }
+.app.compact .jump-row .total { font-size: 10px; padding: 3px 4px; }
+.app.compact .jump-row button { padding: 3px 5px; font-size: 10px; }
+.app.compact .log-header { padding: 3px 6px; font-size: 10px; }
+.app.compact .loglist { font-size: 9px; }
+.app.compact .logitem { padding: 2px 5px; gap: 3px; }
+.app.compact .logitem .thumb, .app.compact .logitem .thumb-ph { width: 18px; height: 26px; }
+.board.compact .half { max-width: none; }
+.board.compact .zone-row { grid-template-columns: 22px repeat(5, var(--cw)) 22px; gap: 3px; margin: 2px 0; }
+.board.compact .zone-row.spell { margin-bottom: 3px; }
+.board.compact .zone-badge { height: var(--ch); font-size: 9px; }
+.board.compact .slot { width: var(--cw); height: var(--ch); }
+.board.compact .slot .num { font-size: 8px; top: 1px; left: 2px; }
+.board.compact .mono .slot .num { left: auto; right: 2px; }
+.board.compact .edge-row, .board.compact .edge-row.empty-edge { grid-template-columns: var(--cw) 1fr var(--cw); gap: 4px; margin: 2px 0; }
+.board.compact .pile { width: var(--cw); height: var(--ch); }
+.board.compact .pile-badge { min-width: 16px; height: 16px; font-size: 9px; top: -4px; left: -4px; }
+.board.compact .hand-row { min-height: var(--ch); gap: 2px; }
+.board.compact .card, .board.compact .hand-row .card { width: var(--cw); height: var(--ch); }
+.board.compact .card .card-img, .board.compact .card .card-name-fallback, .board.compact .card.facedown .card-back { width: var(--iw); height: var(--iw); }
+.board.compact .card .card-name-fallback { top: 1px; font-size: 7px; }
+.board.compact .card .card-name-label { height: 12px; min-height: 12px; font-size: 8px; padding: 0 1px; }
+.board.compact .card .stat { bottom: 12px; font-size: 8px; }
+.board.compact .card-back { border-radius: 3px; box-shadow: inset 0 0 0 2px #41150e, inset 0 0 0 3px #8a4a34; }
+.board.compact .field-row { gap: 5px; margin: 2px 0; }
+.board.compact .field-slot { width: 42px; height: 56px; }
+.board.compact .zone-label { font-size: 8px; }
+.board.compact .pile .zone-label { font-size: 8px; }
+.board.compact .field-slot .field-name { font-size: 8px; }
+.board.compact .field-divider { margin: 3px 0; }
+.board.compact .win-banner { font-size: 13px; padding: 10px 16px; }
+/* 弹窗在横屏小屏下更紧凑 */
+@media (orientation: landscape) and (max-height: 520px) {
+  .card-modal { padding: 8px; }
+  .cm-panel { width: min(560px, 94vw); max-height: 94vh; padding: 10px 12px 14px; }
+  .cm-head { gap: 10px; }
+  .cm-img, .cm-img-ph { width: 100px; height: 140px; }
+  .cm-name { font-size: 15px; }
+  .cm-alt { font-size: 10px; margin-bottom: 6px; }
+  .cm-tags { gap: 3px; margin-bottom: 8px; }
+  .cm-tag { font-size: 10px; padding: 1px 5px; }
+  .cm-grid { font-size: 11px; gap: 2px 6px; }
+  .cm-sec { margin-top: 10px; padding-top: 6px; }
+  .cm-sec .txt { font-size: 11px; line-height: 1.5; }
+}
 </style>
 </head>
 <body>
@@ -174,21 +270,25 @@ select { font-family: inherit; }
     <div class="loading" id="loading">正在加载并解析录像…</div>
     <div class="half" id="half-1" style="display:none">
       <div class="edge-row">
-        <div class="pile" id="deck-1"><div class="card-back"></div><span class="pile-badge">0</span></div>
+        <div class="pile clickable" id="deck-1" data-zone="deck" data-player="1"><div class="card-back"></div><span class="pile-badge">0</span><span class="zone-label" id="deck-1-label">卡组(0)</span></div>
         <div class="hand-row" id="hand-1"></div>
-        <div class="pile" id="extra-1"><div class="card-back"></div><span class="pile-badge">0</span></div>
+        <div class="pile clickable" id="extra-1" data-zone="extra" data-player="1"><div class="card-back"></div><span class="pile-badge">0</span><span class="zone-label" id="extra-1-label">额外区(0)</span></div>
       </div>
       <div class="zone-row" id="mzone-1"></div>
       <div class="zone-row spell" id="szone-1"></div>
     </div>
     <div class="field-divider" id="divider" style="display:none"></div>
+    <div class="field-row" id="field-row" style="display:none">
+      <div class="field-slot" id="field-1" data-field-player="1"><span class="field-name">场地一</span></div>
+      <div class="field-slot" id="field-0" data-field-player="0"><span class="field-name">场地二</span></div>
+    </div>
     <div class="half mono" id="half-0" style="display:none">
       <div class="zone-row" id="mzone-0"></div>
       <div class="zone-row spell" id="szone-0"></div>
       <div class="edge-row">
-        <div class="pile" id="extra-0"><div class="card-back"></div><span class="pile-badge">0</span></div>
+        <div class="pile clickable" id="extra-0" data-zone="extra" data-player="0"><div class="card-back"></div><span class="pile-badge">0</span><span class="zone-label" id="extra-0-label">额外区(0)</span></div>
         <div class="hand-row" id="hand-0"></div>
-        <div class="pile" id="deck-0"><div class="card-back"></div><span class="pile-badge">0</span></div>
+        <div class="pile clickable" id="deck-0" data-zone="deck" data-player="0"><div class="card-back"></div><span class="pile-badge">0</span><span class="zone-label" id="deck-0-label">卡组(0)</span></div>
       </div>
     </div>
     <div class="win-banner" id="winbanner"></div>
@@ -200,6 +300,17 @@ select { font-family: inherit; }
     <div id="cm-content"><div class="cm-loading">正在加载卡牌信息…</div></div>
   </div>
 </div>
+<div class="rotate-hint" id="rotate-hint">
+  <div class="rot-icon">▯↻</div>
+  <div class="rot-title">请横屏观看录像</div>
+  <div class="rot-sub">旋转设备至横屏以获得完整回放体验</div>
+</div>
+<div class="zone-modal" id="zone-modal">
+  <div class="zm-panel" id="zm-panel">
+    <button class="cm-close" id="zm-close" title="关闭">×</button>
+    <div id="zm-content"></div>
+  </div>
+</div>
 <script>
 var FORMAT = "__FORMAT__";
 var REPLAY_ID = "__REPLAY_ID__";
@@ -209,6 +320,31 @@ var urlParams = new URLSearchParams(location.search);
 var ENGINE = urlParams.get("engine") || "";
 var API_URL = "/api/replays/" + encodeURIComponent(FORMAT) + "/" + encodeURIComponent(REPLAY_ID) + "/playback";
 if (ENGINE) { API_URL += "?engine=" + encodeURIComponent(ENGINE); }
+/* 移动端横屏适配：小屏时按可用高度动态缩放整块场地。 */
+function applyMobileLayout() {
+  var app = document.querySelector(".app");
+  var board = document.getElementById("board");
+  // 横屏手机高度通常 <= 520px；桌面窗口很少这么矮，据此判定紧凑模式。
+  var landscape = window.innerWidth > window.innerHeight;
+  var compact = landscape && window.innerHeight <= 520;
+  if (app) app.classList.toggle("compact", compact);
+  if (board) {
+    board.classList.toggle("compact", compact);
+    if (compact) {
+      // Available height: viewport minus a small margin; field natural height ~ 300px.
+      var scale = Math.max(0.6, Math.min(1, (window.innerHeight - 16) / 400));
+      var cw = Math.round(54 * scale);
+      var ch = Math.round(64 * scale);
+      var iw = Math.round(50 * scale);
+      board.style.setProperty("--cw", cw + "px");
+      board.style.setProperty("--ch", ch + "px");
+      board.style.setProperty("--iw", iw + "px");
+    }
+  }
+}
+applyMobileLayout();
+window.addEventListener("resize", applyMobileLayout);
+window.addEventListener("orientationchange", applyMobileLayout);
 document.getElementById("btn-exit").onclick = function () { location.href = "/leaderboards/" + encodeURIComponent(FORMAT) + "?tab=replays"; };
 
 (function initEnginePicker() {
@@ -236,7 +372,7 @@ document.getElementById("btn-exit").onclick = function () { location.href = "/le
   document.querySelector(".sidebar").insertBefore(picker, document.getElementById("controls"));
 })();
 
-var LOC = { DECK: 1, HAND: 2, MZONE: 4, SZONE: 8, GRAVE: 16, REMOVED: 32, EXTRA: 64, OVERLAY: 128 };
+var LOC = { DECK: 1, HAND: 2, MZONE: 4, SZONE: 8, GRAVE: 16, REMOVED: 32, EXTRA: 64, OVERLAY: 128, FIELD: 256 };
 var PHASES = { 1: "抽卡阶段", 2: "准备阶段", 4: "主要阶段 1", 8: "战斗阶段·开始", 16: "战斗阶段", 32: "伤害步骤", 64: "伤害计算", 128: "战斗阶段", 256: "主要阶段 2", 512: "结束阶段" };
 var WIN_REASONS = { 0: "对方生命值归零", 1: "对方认输", 2: "规则胜利", 16: "效果胜利", 17: "对方无卡可抽" };
 
@@ -257,7 +393,9 @@ var zoomed = false;
 function freshState() {
   var players = [];
   for (var i = 0; i < 2; i++) {
-    players.push({ lp: 8000, mzone: [null, null, null, null, null], szone: [null, null, null, null, null, null], hand: [], deckCount: 0, extraCount: 0, graveCount: 0, removedCount: 0 });
+    players.push({ lp: 8000, mzone: [null, null, null, null, null], szone: [null, null, null, null, null, null], hand: [],
+      deck: [], extra: [], grave: [], removed: [], field: null,
+      deckCount: 0, extraCount: 0, graveCount: 0, removedCount: 0 });
   }
   return { players: players, turn: 0, turnPlayer: 0, phase: 0, winner: null, winType: null, recent: "" };
 }
@@ -266,17 +404,32 @@ function padCode8(code) { var s = String(code || ""); return /^\d{1,8}$/.test(s)
 function isFacedown(pos) { return pos === 2 || pos === 8 || pos === 10; }
 function posText(pos) { if (pos === 1) return "表侧攻击"; if (pos === 4) return "表侧守备"; if (pos === 2) return "里侧攻击"; if (pos === 8) return "里侧守备"; return ""; }
 
+function zoneArray(player, location) {
+  var p = state.players[player];
+  if (!p) return null;
+  if (location === LOC.DECK) return p.deck;
+  if (location === LOC.EXTRA) return p.extra;
+  if (location === LOC.GRAVE) return p.grave;
+  if (location === LOC.REMOVED) return p.removed;
+  return null;
+}
 function removeFrom(player, location, sequence) {
   var p = state.players[player];
   if (!p) return null;
   if (location === LOC.MZONE) { var c = p.mzone[sequence]; p.mzone[sequence] = null; return c; }
   if (location === LOC.SZONE) { var c2 = p.szone[sequence]; p.szone[sequence] = null; return c2; }
   if (location === LOC.HAND) { if (sequence >= 0 && sequence < p.hand.length) { return p.hand.splice(sequence, 1)[0]; } return null; }
-  if (location === LOC.DECK) { if (p.deckCount > 0) p.deckCount--; return null; }
-  if (location === LOC.EXTRA) { if (p.extraCount > 0) p.extraCount--; return null; }
-  if (location === LOC.GRAVE) { if (p.graveCount > 0) p.graveCount--; return null; }
-  if (location === LOC.REMOVED) { if (p.removedCount > 0) p.removedCount--; return null; }
-  return null;
+  if (location === LOC.FIELD) { var f = p.field; p.field = null; return f; }
+  // Pile counts stay authoritative (initial counts come from the replay);
+  // the code arrays track only cards whose identity was revealed.
+  var removed = null;
+  var arr = zoneArray(player, location);
+  if (arr && arr.length) { removed = arr.pop(); }
+  if (location === LOC.DECK && p.deckCount > 0) { p.deckCount--; }
+  else if (location === LOC.EXTRA && p.extraCount > 0) { p.extraCount--; }
+  else if (location === LOC.GRAVE && p.graveCount > 0) { p.graveCount--; }
+  else if (location === LOC.REMOVED && p.removedCount > 0) { p.removedCount--; }
+  return removed;
 }
 function placeTo(player, location, sequence, code, position) {
   var p = state.players[player];
@@ -285,10 +438,15 @@ function placeTo(player, location, sequence, code, position) {
   if (location === LOC.MZONE) { p.mzone[sequence] = card; }
   else if (location === LOC.SZONE) { p.szone[sequence] = card; }
   else if (location === LOC.HAND) { if (sequence >= 0 && sequence <= p.hand.length) { p.hand.splice(sequence, 0, card); } else { p.hand.push(card); } }
-  else if (location === LOC.DECK) { p.deckCount++; }
-  else if (location === LOC.EXTRA) { p.extraCount++; }
-  else if (location === LOC.GRAVE) { p.graveCount++; }
-  else if (location === LOC.REMOVED) { p.removedCount++; }
+  else if (location === LOC.FIELD) { p.field = card; }
+  else {
+    var arr = zoneArray(player, location);
+    if (arr && code) { arr.push(code); }
+    if (location === LOC.DECK) { p.deckCount++; }
+    else if (location === LOC.EXTRA) { p.extraCount++; }
+    else if (location === LOC.GRAVE) { p.graveCount++; }
+    else if (location === LOC.REMOVED) { p.removedCount++; }
+  }
 }
 function removeFromHandByCode(player, code) {
   var hand = state.players[player].hand;
@@ -484,6 +642,20 @@ function cardUrl(code) {
   return "/api/cards/" + encodeURIComponent(FORMAT) + "/" + encodeURIComponent(code || 0) + "/image?v=" + encodeURIComponent(CARD_IMG_VERSION);
 }
 
+/* Pause automatic playback while a detail/list popup is open, and restore it
+   only if the user was playing before the popup was opened. */
+var resumeAfterPopup = false;
+function pauseForPopup() {
+  if (document.querySelector(".card-modal.open, .zone-modal.open")) return; // already open
+  resumeAfterPopup = playing;
+  if (playing) pause();
+}
+function resumeIfPaused() {
+  if (document.querySelector(".card-modal.open, .zone-modal.open")) return; // another popup still open
+  if (resumeAfterPopup) { resumeAfterPopup = false; play(); }
+}
+function anyPopupOpen() { return !!document.querySelector(".card-modal.open, .zone-modal.open"); }
+
 /* One in-flight/cache entry per card code. The HTTP response is immutable and
    long-cached too, so this map mainly avoids re-parsing JSON during seek. */
 var cardCache = {};
@@ -583,6 +755,7 @@ function renderCardDetail(code, info) {
 function openCardDetail(code) {
   code = Number(code) || 0;
   if (!code) return;
+  pauseForPopup();
   var modal = document.getElementById("card-modal");
   modal.classList.add("open");
   document.getElementById("cm-content").innerHTML = '<div class="cm-loading">正在加载卡牌信息…</div>';
@@ -591,12 +764,56 @@ function openCardDetail(code) {
     renderCardDetail(code, info);
   });
 }
-function closeCardDetail() { document.getElementById("card-modal").classList.remove("open"); }
+function closeCardDetail() { document.getElementById("card-modal").classList.remove("open"); resumeIfPaused(); }
 document.getElementById("cm-close").onclick = closeCardDetail;
 document.getElementById("card-modal").onclick = function (e) { if (e.target === this) closeCardDetail(); };
-document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeCardDetail(); });
-/* Click a field card, hand card or log thumbnail to view its details. */
+
+/* ---------- 区域列表弹窗（主卡组/额外/墓地/除外） ---------- */
+var ZONE_TITLES = { deck: "主卡组", extra: "额外卡组", grave: "墓地", removed: "除外区" };
+function escapedCardName(code) { return cardNames[String(code)] || ("#" + padCode8(code)); }
+function openZoneList(zone, player) {
+  if (!ZONE_TITLES[zone] || !state || !state.players[player]) return;
+  pauseForPopup();
+  var modal = document.getElementById("zone-modal");
+  modal.classList.add("open");
+  var p = state.players[player];
+  var arr = p[zone] || [];
+  var count = p[zone + "Count"] || 0;
+  var known = {};
+  arr.forEach(function (code) { if (code) known[code] = (known[code] || 0) + 1; });
+  var codes = Object.keys(known);
+  var title = data.playerNames[player] + " 的" + ZONE_TITLES[zone];
+  var html = '<div class="zm-title">' + escapeHtml(title) + '</div>' +
+    '<div class="zm-sub">共 ' + count + ' 张' + (codes.length ? ' · 已公开 ' + arr.length + ' 张' : ' · 未公开具体卡片') + '</div>';
+  if (codes.length) {
+    html += '<div class="zm-grid">' + codes.map(function (code) {
+      var n = escapedCardName(code);
+      return '<div class="zm-item" data-card-code="' + code + '">' +
+        '<img class="zm-thumb" data-card-code="' + code + '" data-card-kind="thumb" alt="" onerror="thumbFallback(this)">' +
+        '<div class="nm" title="' + escapeAttr(n) + '">' + escapeHtml(n) + '</div>' +
+        (known[code] > 1 ? '<div class="cnt">×' + known[code] + '</div>' : '') + '</div>';
+    }).join("") + '</div>';
+  } else {
+    html += '<div class="zm-empty">' + (count ? "录像数据未公开该区域的卡片内容（共 " + count + " 张）" : "该区域当前为空") + '</div>';
+  }
+  document.getElementById("zm-content").innerHTML = html;
+  hydrateCardImages();
+}
+function closeZoneList() { document.getElementById("zone-modal").classList.remove("open"); resumeIfPaused(); }
+document.getElementById("zm-close").onclick = closeZoneList;
+document.getElementById("zone-modal").onclick = function (e) {
+  if (e.target === this) { closeZoneList(); return; }
+  var item = e.target.closest ? e.target.closest(".zm-item[data-card-code]") : null;
+  if (item) { openCardDetail(item.getAttribute("data-card-code")); closeZoneList(); }
+};
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Escape") return;
+  if (document.getElementById("zone-modal").classList.contains("open")) closeZoneList();
+  else closeCardDetail();
+});
 document.getElementById("board").addEventListener("click", function (e) {
+  var zoneEl = e.target.closest ? e.target.closest("[data-zone][data-player]") : null;
+  if (zoneEl) { openZoneList(zoneEl.getAttribute("data-zone"), Number(zoneEl.getAttribute("data-player"))); return; }
   var target = e.target.closest ? e.target.closest("[data-card-code]") : null;
   if (target && target.getAttribute("data-card-kind") === "card") { openCardDetail(target.getAttribute("data-card-code")); }
 });
@@ -618,7 +835,7 @@ function cardHtml(card, hideName) {
     '<div class="card-name-fallback">' + escapeHtml(cname(code)) + '</div>' + stat +
     '<div class="card-name-label">' + escapeHtml(cname(code)) + '</div></div>';
 }
-function renderZone(player, loc, seqOrder, badgeValue, badgeAtStart) {
+function renderZone(player, loc, seqOrder, badgeValue, badgeAtStart, badgeZone, zoneLabel) {
   var p = state.players[player];
   var zone = loc === LOC.MZONE ? p.mzone : p.szone;
   var cells = "";
@@ -627,7 +844,9 @@ function renderZone(player, loc, seqOrder, badgeValue, badgeAtStart) {
     var num = '<span class="num">' + (seq + 1) + '</span>';
     cells += '<div class="slot">' + num + (card ? cardHtml(card, false) : '') + '</div>';
   });
-  var badge = '<div class="zone-badge">' + badgeValue + '</div>';
+  var label = '<span class="zone-label side ' + (badgeAtStart ? "left" : "right") + '">' +
+    escapeHtml(zoneLabel) + '(' + badgeValue + ')</span>';
+  var badge = '<div class="zone-badge clickable" data-zone="' + badgeZone + '" data-player="' + player + '" title="查看列表">' + badgeValue + '</div>' + label;
   var spacer = '<div></div>';
   return badgeAtStart ? badge + cells + spacer : spacer + cells + badge;
 }
@@ -638,7 +857,13 @@ function renderHand(player) {
   p.hand.forEach(function (c) { html += cardHtml(c, hide); });
   return html;
 }
-function setBadge(id, value) { var el = document.getElementById(id); if (el) el.querySelector(".pile-badge").textContent = value; }
+function setBadge(id, value) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.querySelector(".pile-badge").textContent = value;
+  var label = document.getElementById(id + "-label");
+  if (label) { var name = el.getAttribute("data-zone") === "deck" ? "卡组" : "额外区"; label.textContent = name + "(" + value + ")"; }
+}
 
 function renderPlayerInfos() {
   var top = viewFlipped ? 0 : 1;
@@ -681,10 +906,15 @@ function renderHalf(player, isTop) {
   var p = state.players[player];
   var mzId = isTop ? "mzone-1" : "mzone-0";
   var szId = isTop ? "szone-1" : "szone-0";
-  var mseq = isTop ? [4, 3, 2, 1, 0] : [0, 1, 2, 3, 4];
-  var sseq = isTop ? [4, 3, 2, 1, 0] : [0, 1, 2, 3, 4];
-  document.getElementById(mzId).innerHTML = renderZone(player, LOC.MZONE, mseq, p.graveCount, isTop);
-  document.getElementById(szId).innerHTML = renderZone(player, LOC.SZONE, sseq, p.removedCount, isTop);
+  var mseq = [0, 1, 2, 3, 4];
+  var sseq = [0, 1, 2, 3, 4];
+  // 上半场：怪兽区旁=墓地，魔陷区旁=除外区；下半场按截图对调：怪兽区旁=除外区，魔陷区旁=墓地。
+  document.getElementById(mzId).innerHTML = renderZone(player, LOC.MZONE, mseq,
+    isTop ? p.graveCount : p.removedCount, isTop,
+    isTop ? "grave" : "removed", isTop ? "墓地" : "除外区");
+  document.getElementById(szId).innerHTML = renderZone(player, LOC.SZONE, sseq,
+    isTop ? p.removedCount : p.graveCount, isTop,
+    isTop ? "removed" : "grave", isTop ? "除外区" : "墓地");
   if (isTop) {
     document.getElementById("hand-1").innerHTML = renderHand(player);
     setBadge("deck-1", p.deckCount);
@@ -695,6 +925,25 @@ function renderHalf(player, isTop) {
     setBadge("extra-0", p.extraCount);
   }
 }
+function renderFields() {
+  var top = viewFlipped ? 0 : 1;
+  var bottom = viewFlipped ? 1 : 0;
+  [[1, top], [0, bottom]].forEach(function (pair) {
+    var el = document.getElementById("field-" + pair[0]);
+    if (!el) return;
+    var card = state.players[pair[1]].field;
+    var name = pair[0] === 1 ? "场地一" : "场地二";
+    if (card) {
+      var code = card.code || 0;
+      el.innerHTML = '<div class="' + (name === "场地一" ? "" : "mono ") + 'card" data-card-code="' + code + '" data-card-kind="card">' +
+        '<img class="card-img" data-card-code="' + code + '" data-card-kind="card" alt="" onerror="imgFallback(this)">' +
+        '<div class="card-name-fallback">' + escapeHtml(cname(code)) + '</div>' +
+        '<div class="card-name-label">' + escapeHtml(cname(code)) + '</div></div>';
+    } else {
+      el.innerHTML = '<span class="field-name">' + name + '</span>';
+    }
+  });
+}
 function render() {
   var top = viewFlipped ? 0 : 1;
   var bottom = viewFlipped ? 1 : 0;
@@ -702,6 +951,7 @@ function render() {
   renderMeta();
   renderHalf(top, true);
   renderHalf(bottom, false);
+  renderFields();
   var active = activePhaseLabel();
   var phaseEls = document.querySelectorAll("[data-phase-label]");
   for (var j = 0; j < phaseEls.length; j++) {
@@ -871,6 +1121,7 @@ fetch(API_URL)
     document.getElementById("half-0").style.display = "block";
     document.getElementById("half-1").style.display = "block";
     document.getElementById("divider").style.display = "block";
+    document.getElementById("field-row").style.display = "flex";
     document.getElementById("controls").style.display = "grid";
   })
   .catch(function (err) {

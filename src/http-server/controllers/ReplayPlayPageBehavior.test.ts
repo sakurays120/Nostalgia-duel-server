@@ -103,7 +103,85 @@ describe("ReplayPlayPageBehavior", () => {
 		expect(html).toContain('data-card-kind") === "card"');
 		expect(html).toContain('img.thumb[data-card-code]');
 		// close on backdrop and Escape
-		expect(html).toContain('e.key === "Escape"');
+		expect(html).toContain('e.key !== "Escape"');
+	});
+
+	it("labels all zones and swaps the lower-half grave/removed badges", () => {
+		// pile labels
+		for (const id of ["deck-1", "extra-1", "deck-0", "extra-0"]) {
+			expect(html).toContain(`id="${id}-label"`);
+		}
+		expect(html).toContain('卡组(0)');
+		expect(html).toContain('额外区(0)');
+		// side zone labels rendered dynamically
+		expect(html).toContain('class="zone-label side ');
+		expect(html).toContain('escapeHtml(zoneLabel)');
+		// lower half swap: monster row -> removed, spell row -> grave
+		expect(html).toContain('isTop ? p.graveCount : p.removedCount');
+		expect(html).toContain('isTop ? "grave" : "removed"');
+		expect(html).toContain('isTop ? "墓地" : "除外区"');
+		expect(html).toContain('isTop ? p.removedCount : p.graveCount');
+		expect(html).toContain('isTop ? "removed" : "grave"');
+		expect(html).toContain('isTop ? "除外区" : "墓地"');
+	});
+
+	it("renders two middle field-spell slots", () => {
+		expect(html).toContain('id="field-row"');
+		expect(html).toContain('id="field-1"');
+		expect(html).toContain('id="field-0"');
+		expect(html).toContain('data-field-player="1"');
+		expect(html).toContain('data-field-player="0"');
+		expect(html).toContain("场地一");
+		expect(html).toContain("场地二");
+		expect(html).toContain("function renderFields()");
+		expect(html).toContain("FIELD: 256");
+		expect(html).toContain("field: null");
+	});
+
+	it("orders both opponent zones from 1 to 5", () => {
+		expect(html).toContain("var mseq = [0, 1, 2, 3, 4];");
+		expect(html).toContain("var sseq = [0, 1, 2, 3, 4];");
+		expect(html).not.toContain("isTop ? [4, 3, 2, 1, 0]");
+	});
+
+	it("makes deck, extra, grave and removed zones clickable with a list popup", () => {
+		expect(html).toContain('id="zone-modal"');
+		expect(html).toContain('id="zm-close"');
+		expect(html).toContain("function openZoneList(zone, player)");
+		expect(html).toContain('var ZONE_TITLES = { deck: "主卡组", extra: "额外卡组", grave: "墓地", removed: "除外区" }');
+		for (const zone of ["deck", "extra"]) {
+			expect(html).toContain(`data-zone="${zone}"`);
+		}
+		// grave/removed badges are rendered dynamically by renderZone
+		expect(html).toContain('data-zone="');
+		expect(html).toContain('badgeZone');
+		expect(html).toContain('p.graveCount : p.removedCount');
+		expect(html).toContain('p.removedCount : p.graveCount');
+		// per-player card code arrays are tracked in state
+		expect(html).toContain("deck: [], extra: [], grave: [], removed: [], field: null");
+		expect(html).toContain("function zoneArray(player, location)");
+	});
+
+	it("pauses playback while a popup is open and resumes after closing", () => {
+		expect(html).toContain("var resumeAfterPopup = false;");
+		expect(html).toContain("resumeAfterPopup = playing;");
+		expect(html).toContain("function pauseForPopup()");
+		expect(html).toContain("function resumeIfPaused()");
+		expect(html).toContain("pauseForPopup();");
+		expect(html).toContain("resumeIfPaused();");
+		expect(html).toContain('".card-modal.open, .zone-modal.open"');
+	});
+
+	it("supports mobile landscape with a rotate hint and compact field", () => {
+		expect(html).toContain('id="rotate-hint"');
+		expect(html).toContain("请横屏观看录像");
+		expect(html).toContain("@media (orientation: portrait) and (max-width: 820px)");
+		expect(html).toContain(".board.compact");
+		expect(html).toContain(".app.compact .sidebar");
+		expect(html).toContain("function applyMobileLayout()");
+		expect(html).toContain('addEventListener("orientationchange", applyMobileLayout)');
+		expect(html).toContain('board.style.setProperty("--cw"');
+		expect(html).toContain("max-height: 520px");
 	});
 
 	it("appends the configurable card image version to image URLs for cache busting", () => {
