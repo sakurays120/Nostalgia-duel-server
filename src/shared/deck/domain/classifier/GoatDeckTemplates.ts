@@ -63,7 +63,7 @@ export const GOAT_DECK_TEMPLATES: readonly GoatDeckTemplate[] = [
 	{
 		code: "G09",
 		nameZh: "地属性Beat",
-		mainCards: [78658564, 47606319, 47606319, 70074904, 74131780, 79575620, 32807846, 32807846],
+		mainCards: [78658564, 47606319, 47606319, 70074904, 74131780, 79575620],
 	},
 	{
 		code: "G10",
